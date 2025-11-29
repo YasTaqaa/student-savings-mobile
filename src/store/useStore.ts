@@ -3,68 +3,82 @@ import { User, Student, Transaction } from '../types';
 import * as StorageService from '../services/storageService';
 
 interface StoreState {
+  // Auth
   user: User | null;
   isAuthenticated: boolean;
-  isLoading: boolean;
+  
+  // Data
   students: Student[];
   transactions: Transaction[];
   
+  // Auth Actions
   login: (user: User) => Promise<void>;
   logout: () => Promise<void>;
-  loadInitialData: () => Promise<void>;
   
-  addStudent: (student: Omit<Student, 'id' | 'createdAt' | 'updatedAt' | 'balance'>) => Promise<void>;
+  // Student Actions
+  addStudent: (student: Omit<Student, 'id' | 'balance' | 'createdAt' | 'updatedAt'>) => Promise<void>;
   updateStudent: (id: string, updates: Partial<Student>) => Promise<void>;
   deleteStudent: (id: string) => Promise<void>;
   getStudentById: (id: string) => Student | undefined;
   
+  // Transaction Actions
   addTransaction: (transaction: Omit<Transaction, 'id'>) => Promise<void>;
   updateTransaction: (id: string, updates: Partial<Transaction>) => Promise<void>;
   deleteTransaction: (id: string) => Promise<void>;
+  getTransactionById: (id: string) => Transaction | undefined;
   getTransactionsByStudent: (studentId: string) => Transaction[];
   
-  calculateBalance: (studentId: string) => number;
-  getClassReport: () => any[];
+  // Report Actions
+  getClassReport: () => Array<{
+    className: string;
+    grade: number;
+    totalStudents: number;
+    totalBalance: number;
+    totalDeposits: number;
+    totalWithdrawals: number;
+  }>;
+  
+  // Load initial data
+  loadData: () => Promise<void>;
 }
 
 const useStore = create<StoreState>((set, get) => ({
+  // Initial State
   user: null,
   isAuthenticated: false,
-  isLoading: true,
   students: [],
   transactions: [],
   
-  loadInitialData: async () => {
+  // Load Data from Storage
+  loadData: async () => {
     try {
-      const [user, students, transactions] = await Promise.all([
-        StorageService.getUser(),
-        StorageService.getStudents(),
-        StorageService.getTransactions(),
-      ]);
+      const user = await StorageService.getUser();
+      const students = await StorageService.getStudents();
+      const transactions = await StorageService.getTransactions();
       
       set({
-        user,
+        user: user || null,
         isAuthenticated: !!user,
-        students,
-        transactions,
-        isLoading: false,
+        students: students || [],
+        transactions: transactions || [],
       });
     } catch (error) {
-      console.error('Error loading initial data:', error);
-      set({ isLoading: false });
+      console.error('Error loading data:', error);
     }
   },
   
-  login: async (user) => {
+  // Auth Actions
+  login: async (user: User) => {
     await StorageService.saveUser(user);
     set({ user, isAuthenticated: true });
   },
   
   logout: async () => {
-    await StorageService.removeUser();
+    await StorageService.clearUser();
     set({ user: null, isAuthenticated: false });
   },
   
+  // Student Actions
   addStudent: async (studentData) => {
     const newStudent: Student = {
       ...studentData,
@@ -91,52 +105,53 @@ const useStore = create<StoreState>((set, get) => ({
   },
   
   deleteStudent: async (id) => {
-    const updatedStudents = get().students.filter((student) => student.id !== id);
+    const updatedStudents = get().students.filter((s) => s.id !== id);
     const updatedTransactions = get().transactions.filter((t) => t.studentId !== id);
     
-    await Promise.all([
-      StorageService.saveStudents(updatedStudents),
-      StorageService.saveTransactions(updatedTransactions),
-    ]);
+    await StorageService.saveStudents(updatedStudents);
+    await StorageService.saveTransactions(updatedTransactions);
     
-    set({
+    set({ 
       students: updatedStudents,
-      transactions: updatedTransactions,
+      transactions: updatedTransactions 
     });
   },
   
   getStudentById: (id) => {
-    return get().students.find((student) => student.id === id);
+    return get().students.find((s) => s.id === id);
   },
   
+  // Transaction Actions
   addTransaction: async (transactionData) => {
     const newTransaction: Transaction = {
       ...transactionData,
       id: Date.now().toString(),
     };
     
+    // Update student balance
     const updatedStudents = get().students.map((student) => {
       if (student.id === transactionData.studentId) {
-        const newBalance =
-          transactionData.type === 'deposit'
-            ? student.balance + transactionData.amount
-            : student.balance - transactionData.amount;
+        const newBalance = transactionData.type === 'deposit'
+          ? student.balance + transactionData.amount
+          : student.balance - transactionData.amount;
         
-        return { ...student, balance: newBalance, updatedAt: new Date().toISOString() };
+        return {
+          ...student,
+          balance: newBalance,
+          updatedAt: new Date().toISOString(),
+        };
       }
       return student;
     });
     
     const updatedTransactions = [...get().transactions, newTransaction];
     
-    await Promise.all([
-      StorageService.saveStudents(updatedStudents),
-      StorageService.saveTransactions(updatedTransactions),
-    ]);
+    await StorageService.saveStudents(updatedStudents);
+    await StorageService.saveTransactions(updatedTransactions);
     
-    set({
-      transactions: updatedTransactions,
+    set({ 
       students: updatedStudents,
+      transactions: updatedTransactions 
     });
   },
   
@@ -148,38 +163,43 @@ const useStore = create<StoreState>((set, get) => ({
       t.id === id ? { ...t, ...updates } : t
     );
     
-    const updatedStudents = get().students.map((student) => {
+    // Recalculate student balance
+    let updatedStudents = get().students;
+    
+    // Revert old transaction
+    updatedStudents = updatedStudents.map((student) => {
       if (student.id === oldTransaction.studentId) {
-        let newBalance = student.balance;
-        
-        if (oldTransaction.type === 'deposit') {
-          newBalance -= oldTransaction.amount;
-        } else {
-          newBalance += oldTransaction.amount;
-        }
-        
-        const newType = updates.type || oldTransaction.type;
-        const newAmount = updates.amount || oldTransaction.amount;
-        
-        if (newType === 'deposit') {
-          newBalance += newAmount;
-        } else {
-          newBalance -= newAmount;
-        }
-        
-        return { ...student, balance: newBalance, updatedAt: new Date().toISOString() };
+        const revertAmount = oldTransaction.type === 'deposit'
+          ? student.balance - oldTransaction.amount
+          : student.balance + oldTransaction.amount;
+        return { ...student, balance: revertAmount };
       }
       return student;
     });
     
-    await Promise.all([
-      StorageService.saveStudents(updatedStudents),
-      StorageService.saveTransactions(updatedTransactions),
-    ]);
+    // Apply new transaction
+    const newTransaction = updatedTransactions.find((t) => t.id === id)!;
+    updatedStudents = updatedStudents.map((student) => {
+      if (student.id === newTransaction.studentId) {
+        const newBalance = newTransaction.type === 'deposit'
+          ? student.balance + newTransaction.amount
+          : student.balance - newTransaction.amount;
+        
+        return {
+          ...student,
+          balance: newBalance,
+          updatedAt: new Date().toISOString(),
+        };
+      }
+      return student;
+    });
     
-    set({
-      transactions: updatedTransactions,
+    await StorageService.saveStudents(updatedStudents);
+    await StorageService.saveTransactions(updatedTransactions);
+    
+    set({ 
       students: updatedStudents,
+      transactions: updatedTransactions 
     });
   },
   
@@ -187,82 +207,83 @@ const useStore = create<StoreState>((set, get) => ({
     const transaction = get().transactions.find((t) => t.id === id);
     if (!transaction) return;
     
-    const updatedTransactions = get().transactions.filter((t) => t.id !== id);
-    
+    // Revert balance
     const updatedStudents = get().students.map((student) => {
       if (student.id === transaction.studentId) {
-        let newBalance = student.balance;
+        const newBalance = transaction.type === 'deposit'
+          ? student.balance - transaction.amount
+          : student.balance + transaction.amount;
         
-        if (transaction.type === 'deposit') {
-          newBalance -= transaction.amount;
-        } else {
-          newBalance += transaction.amount;
-        }
-        
-        return { ...student, balance: newBalance, updatedAt: new Date().toISOString() };
+        return {
+          ...student,
+          balance: newBalance,
+          updatedAt: new Date().toISOString(),
+        };
       }
       return student;
     });
     
-    await Promise.all([
-      StorageService.saveStudents(updatedStudents),
-      StorageService.saveTransactions(updatedTransactions),
-    ]);
+    const updatedTransactions = get().transactions.filter((t) => t.id !== id);
     
-    set({
-      transactions: updatedTransactions,
+    await StorageService.saveStudents(updatedStudents);
+    await StorageService.saveTransactions(updatedTransactions);
+    
+    set({ 
       students: updatedStudents,
+      transactions: updatedTransactions 
     });
+  },
+  
+  getTransactionById: (id) => {
+    return get().transactions.find((t) => t.id === id);
   },
   
   getTransactionsByStudent: (studentId) => {
     return get().transactions.filter((t) => t.studentId === studentId);
   },
   
-  calculateBalance: (studentId) => {
-    const transactions = get().getTransactionsByStudent(studentId);
-    return transactions.reduce((balance, transaction) => {
-      return transaction.type === 'deposit'
-        ? balance + transaction.amount
-        : balance - transaction.amount;
-    }, 0);
-  },
-  
+  // Report Actions
   getClassReport: () => {
     const students = get().students;
     const transactions = get().transactions;
     
-    const gradeMap = new Map<number, any>();
+    // Group by grade (1-6)
+    const gradeGroups = new Map<number, typeof students>();
     
     for (let grade = 1; grade <= 6; grade++) {
-      gradeMap.set(grade, {
-        grade,
-        className: `Kelas ${grade}`,
-        totalStudents: 0,
-        totalBalance: 0,
-        totalDeposits: 0,
-        totalWithdrawals: 0,
-      });
+      const gradeStudents = students.filter((s) => s.grade === grade);
+      if (gradeStudents.length > 0) {
+        gradeGroups.set(grade, gradeStudents);
+      }
     }
     
-    students.forEach((student) => {
-      const report = gradeMap.get(student.grade);
-      if (report) {
-        report.totalStudents += 1;
-        report.totalBalance += student.balance;
-        
-        const studentTransactions = transactions.filter((t) => t.studentId === student.id);
-        studentTransactions.forEach((t) => {
-          if (t.type === 'deposit') {
-            report.totalDeposits += t.amount;
-          } else {
-            report.totalWithdrawals += t.amount;
-          }
-        });
-      }
+    // Calculate stats for each grade
+    const reports = Array.from(gradeGroups.entries()).map(([grade, gradeStudents]) => {
+      const totalBalance = gradeStudents.reduce((sum, s) => sum + s.balance, 0);
+      
+      // Get transactions for this grade
+      const studentIds = gradeStudents.map((s) => s.id);
+      const gradeTransactions = transactions.filter((t) => studentIds.includes(t.studentId));
+      
+      const totalDeposits = gradeTransactions
+        .filter((t) => t.type === 'deposit')
+        .reduce((sum, t) => sum + t.amount, 0);
+      
+      const totalWithdrawals = gradeTransactions
+        .filter((t) => t.type === 'withdrawal')
+        .reduce((sum, t) => sum + t.amount, 0);
+      
+      return {
+        className: `${grade}`,
+        grade,
+        totalStudents: gradeStudents.length,
+        totalBalance,
+        totalDeposits,
+        totalWithdrawals,
+      };
     });
     
-    return Array.from(gradeMap.values()).filter(report => report.totalStudents > 0);
+    return reports;
   },
 }));
 

@@ -9,10 +9,7 @@ import useStore from '../store/useStore';
 import LoginScreen from '../screens/LoginScreen';
 import ClassSelectionScreen from '../screens/ClassSelectionScreen';
 import StudentListScreen from '../screens/StudentListScreen';
-import StudentDetailScreen from '../screens/StudentDetailScreen';
-import TransactionScreen from '../screens/TransactionScreen';
 import EditStudentScreen from '../screens/EditStudentScreen';
-import EditTransactionScreen from '../screens/EditTransactionScreen';
 import ReportScreen from '../screens/ReportScreen';
 import ProfileScreen from '../screens/ProfileScreen';
 
@@ -47,34 +44,10 @@ function StudentNavigator() {
         }}
       />
       <StudentStack.Screen 
-        name="StudentDetail" 
-        component={StudentDetailScreen}
-        options={{ 
-          title: 'Detail Siswa',
-          headerShown: true,
-        }}
-      />
-      <StudentStack.Screen 
         name="EditStudent" 
         component={EditStudentScreen}
         options={{ 
           title: 'Edit Data Siswa',
-          headerShown: true,
-        }}
-      />
-      <StudentStack.Screen 
-        name="Transaction" 
-        component={TransactionScreen}
-        options={{ 
-          title: 'Input Transaksi',
-          headerShown: true,
-        }}
-      />
-      <StudentStack.Screen 
-        name="EditTransaction" 
-        component={EditTransactionScreen}
-        options={{ 
-          title: 'Edit Transaksi',
           headerShown: true,
         }}
       />

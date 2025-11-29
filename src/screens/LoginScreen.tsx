@@ -4,7 +4,6 @@ import {
   Text,
   TextInput,
   TouchableOpacity,
-  StyleSheet,
   Alert,
   KeyboardAvoidingView,
   Platform,
@@ -12,6 +11,7 @@ import {
 } from 'react-native';
 import useStore from '../store/useStore';
 import * as AuthService from '../services/authService';
+import { common, colors, container, button, input } from '../styles/utils';
 
 export default function LoginScreen() {
   const [username, setUsername] = useState('');
@@ -44,15 +44,19 @@ export default function LoginScreen() {
   
   return (
     <KeyboardAvoidingView 
-      style={styles.container}
+      style={container.screen}
       behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
     >
-      <View style={styles.formContainer}>
-        <Text style={styles.title}>Sistem Tabungan Siswa</Text>
-        <Text style={styles.subtitle}>Login Guru/Admin</Text>
+      <View style={common.p5}>
+        <Text style={[common.text3xl, common.fontBold, common.textBlack, common.textCenter, common.mb2]}>
+          Sistem Tabungan Siswa
+        </Text>
+        <Text style={[common.textBase, common.textGray500, common.textCenter, { marginBottom: 40 }]}>
+          Login Guru/Admin
+        </Text>
         
         <TextInput
-          style={styles.input}
+          style={[input.base, common.mb4]}
           placeholder="Username"
           value={username}
           onChangeText={setUsername}
@@ -62,7 +66,7 @@ export default function LoginScreen() {
         />
         
         <TextInput
-          style={styles.input}
+          style={[input.base, common.mb4]}
           placeholder="Password"
           value={password}
           onChangeText={setPassword}
@@ -72,90 +76,32 @@ export default function LoginScreen() {
         />
         
         <TouchableOpacity 
-          style={[styles.button, loading && styles.buttonDisabled]} 
+          style={[button.primary, { marginTop: 8 }, loading && { opacity: 0.6 }]} 
           onPress={handleLogin}
           disabled={loading}
         >
           {loading ? (
             <ActivityIndicator color="#FFF" />
           ) : (
-            <Text style={styles.buttonText}>Login</Text>
+            <Text style={button.textWhite}>Login</Text>
           )}
         </TouchableOpacity>
         
-        <View style={styles.hintContainer}>
-          <Text style={styles.hintTitle}>Akun Demo:</Text>
-          <Text style={styles.hint}>• Admin: admin / admin123</Text>
-          <Text style={styles.hint}>• Guru 1: guru / guru123</Text>
-          <Text style={styles.hint}>• Guru 2: guru2 / guru123</Text>
+        <View style={[common.bgWhite, common.p4, common.roundedLg, { marginTop: 30 }]}>
+          <Text style={[common.textSm, common.fontSemibold, common.textBlack, common.mb2]}>
+            Akun Demo:
+          </Text>
+          <Text style={[common.textSm, common.textGray500, common.mb1]}>
+            • Admin: admin / admin123
+          </Text>
+          <Text style={[common.textSm, common.textGray500, common.mb1]}>
+            • Guru 1: guru / guru123
+          </Text>
+          <Text style={[common.textSm, common.textGray500]}>
+            • Guru 2: guru2 / guru123
+          </Text>
         </View>
       </View>
     </KeyboardAvoidingView>
   );
 }
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: '#F2F2F7',
-    justifyContent: 'center',
-  },
-  formContainer: {
-    padding: 20,
-  },
-  title: {
-    fontSize: 28,
-    fontWeight: 'bold',
-    color: '#000',
-    textAlign: 'center',
-    marginBottom: 8,
-  },
-  subtitle: {
-    fontSize: 16,
-    color: '#8E8E93',
-    textAlign: 'center',
-    marginBottom: 40,
-  },
-  input: {
-    backgroundColor: '#FFF',
-    paddingHorizontal: 16,
-    paddingVertical: 14,
-    borderRadius: 10,
-    fontSize: 16,
-    marginBottom: 16,
-    borderWidth: 1,
-    borderColor: '#E5E5EA',
-  },
-  button: {
-    backgroundColor: '#007AFF',
-    paddingVertical: 16,
-    borderRadius: 10,
-    alignItems: 'center',
-    marginTop: 8,
-  },
-  buttonDisabled: {
-    opacity: 0.6,
-  },
-  buttonText: {
-    color: '#FFF',
-    fontSize: 18,
-    fontWeight: '600',
-  },
-  hintContainer: {
-    marginTop: 30,
-    padding: 16,
-    backgroundColor: '#FFF',
-    borderRadius: 12,
-  },
-  hintTitle: {
-    fontSize: 14,
-    fontWeight: '600',
-    color: '#000',
-    marginBottom: 8,
-  },
-  hint: {
-    color: '#8E8E93',
-    fontSize: 14,
-    marginBottom: 4,
-  },
-});

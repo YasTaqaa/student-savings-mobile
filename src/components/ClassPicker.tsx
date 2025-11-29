@@ -1,40 +1,36 @@
 import React, { useState } from 'react';
-import {
-  View,
-  Text,
-  TouchableOpacity,
-  Modal,
-  StyleSheet,
-  ScrollView,
-} from 'react-native';
+import { View, Text, TouchableOpacity, Modal, ScrollView } from 'react-native';
 import { CLASS_OPTIONS } from '../types';
+import { common, colors, container, button } from '../styles/utils';
 
-interface ClassPickerProps {
+interface Props {
+  label: string;
   selectedClass: string;
   onSelectClass: (className: string) => void;
-  label?: string;
 }
 
-export default function ClassPicker({ selectedClass, onSelectClass, label }: ClassPickerProps) {
+export default function ClassPicker({ label, selectedClass, onSelectClass }: Props) {
   const [modalVisible, setModalVisible] = useState(false);
 
-  const handleSelectClass = (className: string) => {
+  const handleSelect = (className: string) => {
     onSelectClass(className);
     setModalVisible(false);
   };
 
   return (
-    <View>
-      {label && <Text style={styles.label}>{label}</Text>}
+    <View style={{ marginTop: 12 }}>
+      <Text style={[common.textSm, common.fontSemibold, common.textBlack, { marginBottom: 6 }]}>
+        {label}
+      </Text>
       
       <TouchableOpacity
-        style={styles.pickerButton}
+        style={[common.bgGray50, common.px4, common.py3, common.roundedLg, common.flexRow, common.justifyBetween, common.itemsCenter]}
         onPress={() => setModalVisible(true)}
       >
-        <Text style={styles.pickerButtonText}>
+        <Text style={[common.textBase, selectedClass ? common.textBlack : common.textGray500]}>
           {selectedClass || 'Pilih Kelas'}
         </Text>
-        <Text style={styles.pickerArrow}>▼</Text>
+        <Text style={[common.textXl, common.textPrimary]}>›</Text>
       </TouchableOpacity>
 
       <Modal
@@ -43,35 +39,39 @@ export default function ClassPicker({ selectedClass, onSelectClass, label }: Cla
         transparent
         onRequestClose={() => setModalVisible(false)}
       >
-        <View style={styles.modalOverlay}>
-          <View style={styles.modalContent}>
-            <View style={styles.modalHeader}>
-              <Text style={styles.modalTitle}>Pilih Kelas</Text>
-              <TouchableOpacity onPress={() => setModalVisible(false)}>
-                <Text style={styles.closeButton}>✕</Text>
-              </TouchableOpacity>
-            </View>
-
-            <ScrollView style={styles.scrollView}>
+        <View style={container.modal}>
+          <View style={[container.modalContent, { maxHeight: '80%' }]}>
+            <Text style={[common.textXl, common.fontSemibold, { marginBottom: 20 }, common.textCenter]}>
+              Pilih Kelas
+            </Text>
+            
+            <ScrollView showsVerticalScrollIndicator={false}>
               {CLASS_OPTIONS.map((gradeOption) => (
-                <View key={gradeOption.grade} style={styles.gradeSection}>
-                  <Text style={styles.gradeTitle}>Kelas {gradeOption.grade}</Text>
-                  <View style={styles.classGrid}>
+                <View key={gradeOption.grade} style={{ marginBottom: 20 }}>
+                  <Text style={[common.textSm, common.fontSemibold, common.textGray500, { marginBottom: 8 }]}>
+                    Kelas {gradeOption.grade}
+                  </Text>
+                  
+                  <View style={[common.flexRow, { flexWrap: 'wrap', gap: 8 }]}>
                     {gradeOption.classes.map((className) => (
                       <TouchableOpacity
                         key={className}
                         style={[
-                          styles.classButton,
-                          selectedClass === className && styles.classButtonSelected,
+                          common.px4,
+                          common.py3,
+                          common.roundedLg,
+                          common.itemsCenter,
+                          { minWidth: 80 },
+                          selectedClass === className ? common.bgPrimary : common.bgGray50,
                         ]}
-                        onPress={() => handleSelectClass(className)}
+                        onPress={() => handleSelect(className)}
+                        activeOpacity={0.7}
                       >
-                        <Text
-                          style={[
-                            styles.classButtonText,
-                            selectedClass === className && styles.classButtonTextSelected,
-                          ]}
-                        >
+                        <Text style={[
+                          common.textBase,
+                          common.fontSemibold,
+                          selectedClass === className ? common.textWhite : common.textBlack,
+                        ]}>
                           {className}
                         </Text>
                       </TouchableOpacity>
@@ -80,101 +80,16 @@ export default function ClassPicker({ selectedClass, onSelectClass, label }: Cla
                 </View>
               ))}
             </ScrollView>
+            
+            <TouchableOpacity
+              style={[button.secondary, { marginTop: 20 }]}
+              onPress={() => setModalVisible(false)}
+            >
+              <Text style={button.text}>Tutup</Text>
+            </TouchableOpacity>
           </View>
         </View>
       </Modal>
     </View>
   );
 }
-
-const styles = StyleSheet.create({
-  label: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: '#000',
-    marginBottom: 8,
-  },
-  pickerButton: {
-    backgroundColor: '#FFF',
-    paddingHorizontal: 16,
-    paddingVertical: 14,
-    borderRadius: 10,
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    borderWidth: 1,
-    borderColor: '#E5E5EA',
-  },
-  pickerButtonText: {
-    fontSize: 16,
-    color: '#000',
-  },
-  pickerArrow: {
-    fontSize: 12,
-    color: '#8E8E93',
-  },
-  modalOverlay: {
-    flex: 1,
-    backgroundColor: 'rgba(0,0,0,0.5)',
-    justifyContent: 'flex-end',
-  },
-  modalContent: {
-    backgroundColor: '#FFF',
-    borderTopLeftRadius: 20,
-    borderTopRightRadius: 20,
-    maxHeight: '80%',
-  },
-  modalHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    padding: 20,
-    borderBottomWidth: 1,
-    borderBottomColor: '#E5E5EA',
-  },
-  modalTitle: {
-    fontSize: 20,
-    fontWeight: '600',
-    color: '#000',
-  },
-  closeButton: {
-    fontSize: 24,
-    color: '#8E8E93',
-  },
-  scrollView: {
-    padding: 20,
-  },
-  gradeSection: {
-    marginBottom: 24,
-  },
-  gradeTitle: {
-    fontSize: 18,
-    fontWeight: '600',
-    color: '#000',
-    marginBottom: 12,
-  },
-  classGrid: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: 12,
-  },
-  classButton: {
-    backgroundColor: '#F2F2F7',
-    paddingHorizontal: 24,
-    paddingVertical: 12,
-    borderRadius: 10,
-    minWidth: 80,
-    alignItems: 'center',
-  },
-  classButtonSelected: {
-    backgroundColor: '#007AFF',
-  },
-  classButtonText: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: '#000',
-  },
-  classButtonTextSelected: {
-    color: '#FFF',
-  },
-});

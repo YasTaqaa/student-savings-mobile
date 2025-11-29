@@ -4,7 +4,6 @@ import {
   Text,
   TextInput,
   TouchableOpacity,
-  StyleSheet,
   Alert,
   ScrollView,
   KeyboardAvoidingView,
@@ -15,6 +14,7 @@ import { RouteProp } from '@react-navigation/native';
 import { StudentStackParamList, getGradeFromClass } from '../types';
 import useStore from '../store/useStore';
 import ClassPicker from '../components/ClassPicker';
+import { common, colors, container, button, input } from '../styles/utils';
 
 type NavigationProp = NativeStackNavigationProp<StudentStackParamList, 'EditStudent'>;
 type RouteProps = RouteProp<StudentStackParamList, 'EditStudent'>;
@@ -33,6 +33,7 @@ export default function EditStudentScreen({ navigation, route }: Props) {
   const [nis, setNis] = useState('');
   const [name, setName] = useState('');
   const [selectedClass, setSelectedClass] = useState('');
+  const [balance, setBalance] = useState('0');
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
@@ -40,20 +41,29 @@ export default function EditStudentScreen({ navigation, route }: Props) {
       setNis(student.nis);
       setName(student.name);
       setSelectedClass(student.class);
+      setBalance(student.balance.toString());
     }
   }, [student]);
 
   if (!student) {
     return (
-      <View style={styles.container}>
-        <Text style={styles.errorText}>Data siswa tidak ditemukan</Text>
+      <View style={container.screen}>
+        <Text style={[common.textCenter, common.textDanger, common.textBase, { marginTop: 40 }]}>
+          Data siswa tidak ditemukan
+        </Text>
       </View>
     );
   }
 
   const handleUpdate = async () => {
     if (!nis.trim() || !name.trim() || !selectedClass) {
-      Alert.alert('Error', 'Semua field harus diisi');
+      Alert.alert('Error', 'NIS, Nama, dan Kelas harus diisi');
+      return;
+    }
+
+    const balanceNum = parseFloat(balance);
+    if (isNaN(balanceNum) || balanceNum < 0) {
+      Alert.alert('Error', 'Saldo harus berupa angka dan tidak boleh negatif');
       return;
     }
 
@@ -76,11 +86,11 @@ export default function EditStudentScreen({ navigation, route }: Props) {
         name: name.trim(),
         class: selectedClass,
         grade,
+        balance: balanceNum,
       });
 
-      Alert.alert('Berhasil', 'Data siswa berhasil diupdate', [
-        { text: 'OK', onPress: () => navigation.goBack() },
-      ]);
+      // Langsung kembali
+      navigation.goBack();
     } catch (error) {
       Alert.alert('Error', 'Terjadi kesalahan saat menyimpan data');
     } finally {
@@ -88,16 +98,27 @@ export default function EditStudentScreen({ navigation, route }: Props) {
     }
   };
 
+  const formatCurrency = (value: string) => {
+    const numericValue = value.replace(/[^0-9]/g, '');
+    if (numericValue === '') return '0';
+    return parseInt(numericValue).toLocaleString('id-ID');
+  };
+
+  const handleBalanceChange = (text: string) => {
+    const numericValue = text.replace(/[^0-9]/g, '');
+    setBalance(numericValue);
+  };
+
   return (
     <KeyboardAvoidingView
-      style={styles.container}
+      style={container.screen}
       behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
     >
-      <ScrollView style={styles.scrollView}>
-        <View style={styles.content}>
-          <Text style={styles.label}>NIS (Nomor Induk Siswa)</Text>
+      <ScrollView style={common.flex1}>
+        <View style={common.p5}>
+          <Text style={input.label}>NIS (Nomor Induk Siswa)</Text>
           <TextInput
-            style={styles.input}
+            style={input.base}
             placeholder="Masukkan NIS"
             value={nis}
             onChangeText={setNis}
@@ -105,9 +126,9 @@ export default function EditStudentScreen({ navigation, route }: Props) {
             editable={!loading}
           />
 
-          <Text style={styles.label}>Nama Lengkap</Text>
+          <Text style={input.label}>Nama Lengkap</Text>
           <TextInput
-            style={styles.input}
+            style={input.base}
             placeholder="Masukkan nama lengkap"
             value={name}
             onChangeText={setName}
@@ -120,31 +141,37 @@ export default function EditStudentScreen({ navigation, route }: Props) {
             onSelectClass={setSelectedClass}
           />
 
-          <View style={styles.infoBox}>
-            <Text style={styles.infoLabel}>Saldo Tabungan</Text>
-            <Text style={styles.infoValue}>
-              Rp {student.balance.toLocaleString('id-ID')}
-            </Text>
-            <Text style={styles.infoNote}>
-              * Saldo tidak dapat diubah di sini
-            </Text>
+          <Text style={input.label}>Saldo Tabungan</Text>
+          <View style={[input.base, common.flexRow, common.itemsCenter]}>
+            <Text style={[common.textBase, common.textGray500, common.mr2]}>Rp</Text>
+            <TextInput
+              style={[common.flex1, { fontSize: 16, padding: 0 }]}
+              placeholder="0"
+              value={formatCurrency(balance)}
+              onChangeText={handleBalanceChange}
+              keyboardType="numeric"
+              editable={!loading}
+            />
           </View>
+          <Text style={[common.textXs, common.textGray500, { marginTop: 4, fontStyle: 'italic' }]}>
+            💡 Saldo dapat diedit langsung atau melalui transaksi
+          </Text>
 
-          <View style={styles.buttonContainer}>
+          <View style={[common.flexRow, { gap: 12, marginTop: 32, marginBottom: 40 }]}>
             <TouchableOpacity
-              style={[styles.button, styles.cancelButton]}
+              style={[button.secondary, common.flex1]}
               onPress={() => navigation.goBack()}
               disabled={loading}
             >
-              <Text style={styles.cancelButtonText}>Batal</Text>
+              <Text style={button.text}>Batal</Text>
             </TouchableOpacity>
 
             <TouchableOpacity
-              style={[styles.button, styles.saveButton, loading && styles.buttonDisabled]}
+              style={[button.primary, common.flex1, loading && { opacity: 0.6 }]}
               onPress={handleUpdate}
               disabled={loading}
             >
-              <Text style={styles.saveButtonText}>
+              <Text style={button.textWhite}>
                 {loading ? 'Menyimpan...' : 'Simpan'}
               </Text>
             </TouchableOpacity>
@@ -154,93 +181,3 @@ export default function EditStudentScreen({ navigation, route }: Props) {
     </KeyboardAvoidingView>
   );
 }
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: '#F2F2F7',
-  },
-  scrollView: {
-    flex: 1,
-  },
-  content: {
-    padding: 20,
-  },
-  label: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: '#000',
-    marginBottom: 8,
-    marginTop: 16,
-  },
-  input: {
-    backgroundColor: '#FFF',
-    paddingHorizontal: 16,
-    paddingVertical: 14,
-    borderRadius: 10,
-    fontSize: 16,
-    borderWidth: 1,
-    borderColor: '#E5E5EA',
-  },
-  infoBox: {
-    backgroundColor: '#E8F4FD',
-    padding: 16,
-    borderRadius: 12,
-    marginTop: 24,
-    borderWidth: 1,
-    borderColor: '#007AFF',
-  },
-  infoLabel: {
-    fontSize: 14,
-    color: '#007AFF',
-    marginBottom: 4,
-  },
-  infoValue: {
-    fontSize: 24,
-    fontWeight: 'bold',
-    color: '#007AFF',
-    marginBottom: 8,
-  },
-  infoNote: {
-    fontSize: 12,
-    color: '#8E8E93',
-    fontStyle: 'italic',
-  },
-  buttonContainer: {
-    flexDirection: 'row',
-    gap: 12,
-    marginTop: 32,
-    marginBottom: 40,
-  },
-  button: {
-    flex: 1,
-    paddingVertical: 16,
-    borderRadius: 10,
-    alignItems: 'center',
-  },
-  cancelButton: {
-    backgroundColor: '#F2F2F7',
-  },
-  cancelButtonText: {
-    color: '#000',
-    fontSize: 16,
-    fontWeight: '600',
-  },
-  saveButton: {
-    backgroundColor: '#007AFF',
-  },
-  saveButtonText: {
-    color: '#FFF',
-    fontSize: 16,
-    fontWeight: '600',
-  },
-  buttonDisabled: {
-    opacity: 0.6,
-  },
-  errorText: {
-    textAlign: 'center',
-    color: '#FF3B30',
-    fontSize: 16,
-    marginTop: 40,
-  },
-});

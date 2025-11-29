@@ -3,12 +3,12 @@ import {
   View,
   Text,
   TouchableOpacity,
-  StyleSheet,
   ScrollView,
 } from 'react-native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { StudentStackParamList, ClassGroup } from '../types';
 import useStore from '../store/useStore';
+import { common, colors, container, fab } from '../styles/utils';
 
 type NavigationProp = NativeStackNavigationProp<StudentStackParamList, 'ClassSelection'>;
 
@@ -19,15 +19,13 @@ interface Props {
 export default function ClassSelectionScreen({ navigation }: Props) {
   const students = useStore((state) => state.students);
 
-  // Group students by grade dengan statistik
   const classGroups = useMemo((): ClassGroup[] => {
     const groups: ClassGroup[] = [];
-
+    
     for (let grade = 1; grade <= 6; grade++) {
       const gradeStudents = students.filter((s) => s.grade === grade);
       const totalBalance = gradeStudents.reduce((sum, s) => sum + s.balance, 0);
 
-      // Hitung jumlah siswa per kelas (1A, 1B, 1C, dst)
       const classesInGrade: string[] = [];
       gradeStudents.forEach((s) => {
         if (!classesInGrade.includes(s.class)) {
@@ -46,7 +44,7 @@ export default function ClassSelectionScreen({ navigation }: Props) {
 
     return groups.filter((g) => g.totalStudents > 0);
   }, [students]);
-
+  
   const formatCurrency = (amount: number) => {
     return `Rp ${amount.toLocaleString('id-ID')}`;
   };
@@ -65,55 +63,78 @@ export default function ClassSelectionScreen({ navigation }: Props) {
   const totalStats = getTotalStats();
 
   return (
-    <View style={styles.container}>
+    <View style={container.screen}>
       {/* Header Summary */}
-      <View style={styles.summaryCard}>
-        <Text style={styles.summaryTitle}>📚 Pilih Kelas</Text>
-        <Text style={styles.summarySubtitle}>
+      <View style={[common.bgPrimary, common.p5]}>
+        <Text style={[common.text2xl, common.fontBold, common.textWhite, common.mb1]}>
+          📚 Pilih Kelas
+        </Text>
+        <Text style={[common.textSm, common.textWhite, { opacity: 0.9 }]}>
           {totalStats.students} siswa • {formatCurrency(totalStats.balance)}
         </Text>
       </View>
 
       <ScrollView 
-        contentContainerStyle={styles.scrollContent}
+        contentContainerStyle={{ padding: 16, paddingBottom: 100 }}
         showsVerticalScrollIndicator={false}
       >
         {classGroups.length > 0 ? (
           classGroups.map((group) => (
             <TouchableOpacity
               key={group.grade}
-              style={styles.classCard}
+              style={[common.bgWhite, common.roundedXl, common.p5, common.shadow, common.mb4]}
               onPress={() => navigation.navigate('StudentList', { grade: group.grade })}
               activeOpacity={0.7}
             >
-              <View style={styles.cardHeader}>
-                <View style={styles.gradeIconContainer}>
-                  <Text style={styles.gradeIcon}>{group.grade}</Text>
+              <View style={[common.flexRow, common.itemsCenter, common.mb4]}>
+                <View style={[
+                  { width: 56, height: 56 },
+                  common.roundedFull,
+                  common.bgPrimary,
+                  common.justifyCenter,
+                  common.itemsCenter,
+                  common.mr2
+                ]}>
+                  <Text style={[common.text3xl, common.fontBold, common.textWhite]}>
+                    {group.grade}
+                  </Text>
                 </View>
-                <View style={styles.cardInfo}>
-                  <Text style={styles.cardTitle}>{group.title}</Text>
-                  <Text style={styles.cardSubtitle}>
+                
+                <View style={common.flex1}>
+                  <Text style={[common.textXl, common.fontBold, common.textBlack, common.mb1]}>
+                    {group.title}
+                  </Text>
+                  <Text style={[common.textSm, common.textGray500]}>
                     {group.classes.join(', ') || 'Belum ada kelas'}
                   </Text>
                 </View>
-                <View style={styles.arrowContainer}>
-                  <Text style={styles.arrow}>›</Text>
+
+                <View style={[
+                  { width: 32, height: 32 },
+                  common.roundedFull,
+                  common.bgGray50,
+                  common.justifyCenter,
+                  common.itemsCenter
+                ]}>
+                  <Text style={[common.text2xl, common.textPrimary, common.fontBold]}>›</Text>
                 </View>
               </View>
 
-              <View style={styles.cardStats}>
-                <View style={styles.statItem}>
-                  <Text style={styles.statIcon}>👨‍🎓</Text>
-                  <Text style={styles.statLabel}>Siswa</Text>
-                  <Text style={styles.statValue}>{group.totalStudents}</Text>
+              <View style={[common.flexRow, common.borderB, common.borderGray100, { paddingTop: 16 }]}>
+                <View style={[common.flex1, common.itemsCenter]}>
+                  <Text style={{ fontSize: 24, marginBottom: 4 }}>👨‍🎓</Text>
+                  <Text style={[common.textXs, common.textGray500, common.mb1]}>Siswa</Text>
+                  <Text style={[common.textSm, common.fontSemibold, common.textBlack]}>
+                    {group.totalStudents}
+                  </Text>
                 </View>
 
-                <View style={styles.statDivider} />
+                <View style={{ width: 1, backgroundColor: colors.gray[100], marginHorizontal: 16 }} />
 
-                <View style={styles.statItem}>
-                  <Text style={styles.statIcon}>💰</Text>
-                  <Text style={styles.statLabel}>Total Saldo</Text>
-                  <Text style={styles.statValue}>
+                <View style={[common.flex1, common.itemsCenter]}>
+                  <Text style={{ fontSize: 24, marginBottom: 4 }}>💰</Text>
+                  <Text style={[common.textXs, common.textGray500, common.mb1]}>Total Saldo</Text>
+                  <Text style={[common.textSm, common.fontSemibold, common.textBlack, common.textCenter]}>
                     {formatCurrency(group.totalBalance)}
                   </Text>
                 </View>
@@ -121,180 +142,25 @@ export default function ClassSelectionScreen({ navigation }: Props) {
             </TouchableOpacity>
           ))
         ) : (
-          <View style={styles.emptyContainer}>
-            <Text style={styles.emptyIcon}>📚</Text>
-            <Text style={styles.emptyText}>Belum ada siswa</Text>
-            <Text style={styles.emptySubtext}>
+          <View style={[common.itemsCenter, { marginTop: 100, paddingHorizontal: 40 }]}>
+            <Text style={{ fontSize: 80, marginBottom: 20 }}>📚</Text>
+            <Text style={[common.textXl, common.fontSemibold, common.textBlack, common.mb2, common.textCenter]}>
+              Belum ada siswa
+            </Text>
+            <Text style={[common.textSm, common.textGray500, common.textCenter, { lineHeight: 20 }]}>
               Tambahkan siswa baru dari tombol + di bawah
             </Text>
           </View>
         )}
       </ScrollView>
-
-      {/* Floating Action Button - Tambah Siswa */}
+      
       <TouchableOpacity
-        style={styles.fab}
-        onPress={() => navigation.navigate('StudentList', { grade: 0 })} // grade 0 = tampilkan semua + form tambah
+        style={fab.base}
+        onPress={() => navigation.navigate('StudentList', { grade: 0 })}
+        activeOpacity={0.8}
       >
-        <Text style={styles.fabText}>+</Text>
+        <Text style={fab.text}>+</Text>
       </TouchableOpacity>
     </View>
   );
 }
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: '#F2F2F7',
-  },
-  summaryCard: {
-    backgroundColor: '#007AFF',
-    padding: 20,
-    paddingTop: 16,
-    paddingBottom: 16,
-  },
-  summaryTitle: {
-    fontSize: 24,
-    fontWeight: 'bold',
-    color: '#FFF',
-    marginBottom: 4,
-  },
-  summarySubtitle: {
-    fontSize: 14,
-    color: '#FFF',
-    opacity: 0.9,
-  },
-  scrollContent: {
-    padding: 16,
-    paddingBottom: 100,
-  },
-  classCard: {
-    backgroundColor: '#FFF',
-    borderRadius: 16,
-    padding: 20,
-    marginBottom: 16,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 8,
-    elevation: 4,
-  },
-  cardHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: 16,
-  },
-  gradeIconContainer: {
-    width: 56,
-    height: 56,
-    borderRadius: 28,
-    backgroundColor: '#007AFF',
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginRight: 16,
-  },
-  gradeIcon: {
-    fontSize: 28,
-    fontWeight: 'bold',
-    color: '#FFF',
-  },
-  cardInfo: {
-    flex: 1,
-  },
-  cardTitle: {
-    fontSize: 20,
-    fontWeight: '700',
-    color: '#000',
-    marginBottom: 4,
-  },
-  cardSubtitle: {
-    fontSize: 14,
-    color: '#8E8E93',
-  },
-  arrowContainer: {
-    width: 32,
-    height: 32,
-    borderRadius: 16,
-    backgroundColor: '#F2F2F7',
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  arrow: {
-    fontSize: 24,
-    color: '#007AFF',
-    fontWeight: 'bold',
-  },
-  cardStats: {
-    flexDirection: 'row',
-    borderTopWidth: 1,
-    borderTopColor: '#F2F2F7',
-    paddingTop: 16,
-  },
-  statItem: {
-    flex: 1,
-    alignItems: 'center',
-  },
-  statIcon: {
-    fontSize: 24,
-    marginBottom: 4,
-  },
-  statLabel: {
-    fontSize: 12,
-    color: '#8E8E93',
-    marginBottom: 4,
-  },
-  statValue: {
-    fontSize: 14,
-    fontWeight: '600',
-    color: '#000',
-    textAlign: 'center',
-  },
-  statDivider: {
-    width: 1,
-    backgroundColor: '#E5E5EA',
-    marginHorizontal: 16,
-  },
-  emptyContainer: {
-    alignItems: 'center',
-    marginTop: 100,
-    paddingHorizontal: 40,
-  },
-  emptyIcon: {
-    fontSize: 80,
-    marginBottom: 20,
-  },
-  emptyText: {
-    fontSize: 20,
-    fontWeight: '600',
-    color: '#000',
-    marginBottom: 8,
-    textAlign: 'center',
-  },
-  emptySubtext: {
-    fontSize: 14,
-    color: '#8E8E93',
-    textAlign: 'center',
-    lineHeight: 20,
-  },
-  fab: {
-    position: 'absolute',
-    right: 20,
-    bottom: 20,
-    width: 60,
-    height: 60,
-    borderRadius: 30,
-    backgroundColor: '#007AFF',
-    justifyContent: 'center',
-    alignItems: 'center',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.3,
-    shadowRadius: 6,
-    elevation: 8,
-  },
-  fabText: {
-    fontSize: 32,
-    color: '#FFF',
-    fontWeight: '300',
-  },
-});

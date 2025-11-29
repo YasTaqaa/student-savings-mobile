@@ -76,3 +76,7 @@ export const clearAllData = async (): Promise<void> => {
     console.error('Error clearing data:', error);
   }
 };
+
+export function clearUser() {
+  throw new Error('Function not implemented.');
+}

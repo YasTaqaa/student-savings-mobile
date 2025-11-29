@@ -4,7 +4,6 @@ import {
   Text,
   FlatList,
   TouchableOpacity,
-  StyleSheet,
   Alert,
   Modal,
   TextInput,
@@ -15,6 +14,7 @@ import { RouteProp } from '@react-navigation/native';
 import { StudentStackParamList, getGradeFromClass } from '../types';
 import useStore from '../store/useStore';
 import ClassPicker from '../components/ClassPicker';
+import { common, colors, container, button, input } from '../styles/utils';
 
 type NavigationProp = NativeStackNavigationProp<StudentStackParamList, 'StudentList'>;
 type RouteProps = RouteProp<StudentStackParamList, 'StudentList'>;
@@ -158,64 +158,89 @@ export default function StudentListScreen({ navigation, route }: Props) {
   };
 
   const renderStudentCard = (student: any) => (
-    <View key={student.id} style={styles.studentCard}>
+    <View key={student.id} style={[
+      common.flexRow,
+      common.itemsCenter,
+      common.bgWhite,
+      common.mt3,
+      common.roundedLg,
+      common.shadow,
+      common.overflowHidden
+    ]}>
       <TouchableOpacity
-        style={styles.studentInfoTouchable}
+        style={[common.flex1, common.flexRow, common.itemsCenter, common.p4]}
         onPress={() => navigation.navigate('EditStudent', { studentId: student.id })}
         activeOpacity={0.7}
       >
-        <View style={styles.studentInfo}>
-          <Text style={styles.studentName}>{student.name}</Text>
-          <Text style={styles.studentMeta}>NIS: {student.nis}</Text>
+        <View style={common.flex1}>
+          <Text style={[common.textLg, common.fontSemibold, common.textBlack, common.mb1]}>
+            {student.name}
+          </Text>
+          <Text style={[common.textSm, common.textGray500]}>
+            NIS: {student.nis}
+          </Text>
         </View>
 
-        <Text style={styles.studentBalance}>{formatCurrency(student.balance)}</Text>
+        <Text style={[common.textLg, common.fontBold, common.textSuccess, common.mr2]}>
+          {formatCurrency(student.balance)}
+        </Text>
       </TouchableOpacity>
 
       <TouchableOpacity
-        style={styles.deleteButton}
+        style={[common.w14, common.h14, common.justifyCenter, common.itemsCenter, common.borderL, common.borderGray100]}
         onPress={() => showDeleteConfirm(student)}
         activeOpacity={0.7}
       >
-        <Text style={styles.deleteIcon}>🗑️</Text>
+        <Text style={{ fontSize: 20 }}>🗑️</Text>
       </TouchableOpacity>
     </View>
   );
   
   return (
-    <View style={styles.container}>
-      <View style={styles.header}>
-        <Text style={styles.headerTitle}>
+    <View style={container.screen}>
+      {/* Header */}
+      <View style={[common.bgWhite, common.p4, common.borderB, common.borderGray100]}>
+        <Text style={[common.text2xl, common.fontBold, common.textBlack, common.mb2]}>
           {grade === 0 ? 'Semua Siswa' : `Kelas ${grade}`}
         </Text>
-        <View style={styles.headerStats}>
-          <Text style={styles.headerStat}>👨‍🎓 {students.length} siswa</Text>
-          <Text style={styles.headerStat}>💰 {formatCurrency(getTotalBalance())}</Text>
+        <View style={[common.flexRow, { gap: 16 }]}>
+          <Text style={[common.textSm, common.textGray500]}>
+            👨‍🎓 {students.length} siswa
+          </Text>
+          <Text style={[common.textSm, common.textGray500]}>
+            💰 {formatCurrency(getTotalBalance())}
+          </Text>
         </View>
       </View>
 
-      <View style={styles.hintContainer}>
-        <Text style={styles.hintText}>
+      {/* Hint */}
+      <View style={[common.bgBlue50, common.py2, common.px4, common.borderB, common.borderPrimary]}>
+        <Text style={[common.textXs, common.textPrimary, common.textCenter, common.fontMedium]}>
           💡 Tap nama untuk edit • Tap 🗑️ untuk hapus
         </Text>
       </View>
 
+      {/* List */}
       {groupedStudents.length > 0 ? (
         <FlatList
           data={groupedStudents}
           keyExtractor={(item) => item[0]}
-          contentContainerStyle={styles.listContainer}
+          contentContainerStyle={{ paddingBottom: 100 }}
           showsVerticalScrollIndicator={false}
           renderItem={({ item }) => {
             const [className, classStudents] = item;
             return (
-              <View style={styles.classSection}>
-                <View style={styles.classSectionHeader}>
-                  <Text style={styles.classSectionTitle}>Kelas {className}</Text>
-                  <Text style={styles.classSectionCount}>{classStudents.length} siswa</Text>
+              <View style={common.mt4}>
+                <View style={[common.flexRow, common.justifyBetween, common.itemsCenter, common.px4, { paddingVertical: 10 }, common.bgGray100]}>
+                  <Text style={[common.textBase, common.fontBold, common.textBlack]}>
+                    Kelas {className}
+                  </Text>
+                  <Text style={[common.textSm, common.textGray500, common.fontSemibold]}>
+                    {classStudents.length} siswa
+                  </Text>
                 </View>
 
-                <View style={styles.studentList}>
+                <View style={common.px4}>
                   {classStudents.map((student) => renderStudentCard(student))}
                 </View>
               </View>
@@ -223,45 +248,51 @@ export default function StudentListScreen({ navigation, route }: Props) {
           }}
         />
       ) : (
-        <View style={styles.emptyContainer}>
-          <Text style={styles.emptyIcon}>📚</Text>
-          <Text style={styles.emptyText}>
+        <View style={[common.itemsCenter, { marginTop: 100, paddingHorizontal: 40 }]}>
+          <Text style={{ fontSize: 64, marginBottom: 16 }}>📚</Text>
+          <Text style={[common.textXl, common.fontSemibold, common.textBlack, common.mb2, common.textCenter]}>
             {grade === 0 ? 'Belum ada data siswa' : `Belum ada siswa di Kelas ${grade}`}
           </Text>
-          <Text style={styles.emptySubtext}>Tap tombol + untuk menambah siswa baru</Text>
+          <Text style={[common.textSm, common.textGray500, common.textCenter]}>
+            Tap tombol + untuk menambah siswa baru
+          </Text>
         </View>
       )}
       
+      {/* FAB */}
       <TouchableOpacity
-        style={styles.fab}
+        style={[common.absolute, { right: 20, bottom: 20 }, common.w15, common.h15, common.roundedFull, common.bgPrimary, common.justifyCenter, common.itemsCenter, common.shadowLg]}
         onPress={() => setModalVisible(true)}
         activeOpacity={0.8}
       >
-        <Text style={styles.fabText}>+</Text>
+        <Text style={{ fontSize: 32, color: colors.white, fontWeight: '300' }}>+</Text>
       </TouchableOpacity>
       
+      {/* Modal */}
       <Modal
         visible={modalVisible}
         animationType="slide"
         transparent
         onRequestClose={() => setModalVisible(false)}
       >
-        <View style={styles.modalOverlay}>
-          <View style={styles.modalContent}>
-            <Text style={styles.modalTitle}>Tambah Siswa Baru</Text>
+        <View style={container.modal}>
+          <View style={container.modalContent}>
+            <Text style={[common.textXl, common.fontSemibold, { marginBottom: 20 }, common.textCenter]}>
+              Tambah Siswa Baru
+            </Text>
             
-            <Text style={styles.inputLabel}>NIS</Text>
+            <Text style={input.label}>NIS</Text>
             <TextInput
-              style={styles.input}
+              style={[input.base, common.mb1]}
               placeholder="Nomor Induk Siswa"
               value={newStudent.nis}
               onChangeText={(text) => setNewStudent({ ...newStudent, nis: text })}
               keyboardType="numeric"
             />
             
-            <Text style={styles.inputLabel}>Nama Lengkap</Text>
+            <Text style={input.label}>Nama Lengkap</Text>
             <TextInput
-              style={styles.input}
+              style={[input.base, common.mb1]}
               placeholder="Nama lengkap siswa"
               value={newStudent.name}
               onChangeText={(text) => setNewStudent({ ...newStudent, name: text })}
@@ -273,22 +304,22 @@ export default function StudentListScreen({ navigation, route }: Props) {
               onSelectClass={(className) => setNewStudent({ ...newStudent, class: className })}
             />
             
-            <View style={styles.modalButtons}>
+            <View style={[common.flexRow, { gap: 12, marginTop: 24 }]}>
               <TouchableOpacity
-                style={[styles.modalButton, styles.cancelButton]}
+                style={[button.secondary, common.flex1]}
                 onPress={() => {
                   setNewStudent({ nis: '', name: '', class: '' });
                   setModalVisible(false);
                 }}
               >
-                <Text style={styles.cancelButtonText}>Batal</Text>
+                <Text style={[button.text, common.textBlack]}>Batal</Text>
               </TouchableOpacity>
               
               <TouchableOpacity
-                style={[styles.modalButton, styles.submitButton]}
+                style={[button.primary, common.flex1]}
                 onPress={handleAddStudent}
               >
-                <Text style={styles.submitButtonText}>Simpan</Text>
+                <Text style={button.textWhite}>Simpan</Text>
               </TouchableOpacity>
             </View>
           </View>
@@ -297,221 +328,3 @@ export default function StudentListScreen({ navigation, route }: Props) {
     </View>
   );
 }
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: '#F2F2F7',
-  },
-  header: {
-    backgroundColor: '#FFF',
-    padding: 16,
-    borderBottomWidth: 1,
-    borderBottomColor: '#E5E5EA',
-  },
-  headerTitle: {
-    fontSize: 24,
-    fontWeight: 'bold',
-    color: '#000',
-    marginBottom: 8,
-  },
-  headerStats: {
-    flexDirection: 'row',
-    gap: 16,
-  },
-  headerStat: {
-    fontSize: 14,
-    color: '#8E8E93',
-  },
-  hintContainer: {
-    backgroundColor: '#E8F4FD',
-    paddingVertical: 8,
-    paddingHorizontal: 16,
-    borderBottomWidth: 1,
-    borderBottomColor: '#007AFF',
-  },
-  hintText: {
-    fontSize: 12,
-    color: '#007AFF',
-    textAlign: 'center',
-    fontWeight: '500',
-  },
-  listContainer: {
-    paddingBottom: 100,
-  },
-  classSection: {
-    marginTop: 16,
-  },
-  classSectionHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    paddingHorizontal: 16,
-    paddingVertical: 10,
-    backgroundColor: '#E5E5EA',
-  },
-  classSectionTitle: {
-    fontSize: 16,
-    fontWeight: '700',
-    color: '#000',
-  },
-  classSectionCount: {
-    fontSize: 14,
-    color: '#8E8E93',
-    fontWeight: '600',
-  },
-  studentList: {
-    paddingHorizontal: 16,
-  },
-  studentCard: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: '#FFF',
-    marginTop: 12,
-    borderRadius: 12,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 3,
-    overflow: 'hidden',
-  },
-  studentInfoTouchable: {
-    flex: 1,
-    flexDirection: 'row',
-    alignItems: 'center',
-    padding: 16,
-  },
-  studentInfo: {
-    flex: 1,
-  },
-  studentName: {
-    fontSize: 18,
-    fontWeight: '600',
-    color: '#000',
-    marginBottom: 4,
-  },
-  studentMeta: {
-    fontSize: 14,
-    color: '#8E8E93',
-  },
-  studentBalance: {
-    fontSize: 18,
-    fontWeight: '700',
-    color: '#34C759',
-    marginRight: 8,
-  },
-  deleteButton: {
-    width: 56,
-    height: 56,
-    justifyContent: 'center',
-    alignItems: 'center',
-    borderLeftWidth: 1,
-    borderLeftColor: '#E5E5EA',
-  },
-  deleteIcon: {
-    fontSize: 20,
-  },
-  emptyContainer: {
-    alignItems: 'center',
-    marginTop: 100,
-    paddingHorizontal: 40,
-  },
-  emptyIcon: {
-    fontSize: 64,
-    marginBottom: 16,
-  },
-  emptyText: {
-    fontSize: 20,
-    fontWeight: '600',
-    color: '#000',
-    marginBottom: 8,
-    textAlign: 'center',
-  },
-  emptySubtext: {
-    fontSize: 14,
-    color: '#8E8E93',
-    textAlign: 'center',
-  },
-  fab: {
-    position: 'absolute',
-    right: 20,
-    bottom: 20,
-    width: 60,
-    height: 60,
-    borderRadius: 30,
-    backgroundColor: '#007AFF',
-    justifyContent: 'center',
-    alignItems: 'center',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.3,
-    shadowRadius: 6,
-    elevation: 8,
-  },
-  fabText: {
-    fontSize: 32,
-    color: '#FFF',
-    fontWeight: '300',
-  },
-  modalOverlay: {
-    flex: 1,
-    backgroundColor: 'rgba(0,0,0,0.5)',
-    justifyContent: 'center',
-    padding: 20,
-  },
-  modalContent: {
-    backgroundColor: '#FFF',
-    borderRadius: 16,
-    padding: 20,
-    maxHeight: '90%',
-  },
-  modalTitle: {
-    fontSize: 20,
-    fontWeight: '600',
-    marginBottom: 20,
-    textAlign: 'center',
-  },
-  inputLabel: {
-    fontSize: 14,
-    fontWeight: '600',
-    color: '#000',
-    marginBottom: 6,
-    marginTop: 12,
-  },
-  input: {
-    backgroundColor: '#F2F2F7',
-    paddingHorizontal: 16,
-    paddingVertical: 12,
-    borderRadius: 10,
-    fontSize: 16,
-    marginBottom: 4,
-  },
-  modalButtons: {
-    flexDirection: 'row',
-    gap: 12,
-    marginTop: 24,
-  },
-  modalButton: {
-    flex: 1,
-    paddingVertical: 14,
-    borderRadius: 10,
-    alignItems: 'center',
-  },
-  cancelButton: {
-    backgroundColor: '#F2F2F7',
-  },
-  cancelButtonText: {
-    color: '#000',
-    fontSize: 16,
-    fontWeight: '600',
-  },
-  submitButton: {
-    backgroundColor: '#007AFF',
-  },
-  submitButtonText: {
-    color: '#FFF',
-    fontSize: 16,
-    fontWeight: '600',
-  },
-});
