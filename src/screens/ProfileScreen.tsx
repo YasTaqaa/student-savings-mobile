@@ -2,10 +2,10 @@ import React from 'react';
 import {
   View,
   Text,
-  StyleSheet,
   TouchableOpacity,
   ScrollView,
   Alert,
+  Platform,
 } from 'react-native';
 import useStore from '../store/useStore';
 import { common, colors, container, button } from '../styles/utils';
@@ -17,18 +17,31 @@ export default function ProfileScreen() {
   const transactions = useStore((state) => state.transactions);
 
   const handleLogout = () => {
-    Alert.alert(
-      'Konfirmasi Logout',
-      'Apakah Anda yakin ingin keluar?',
-      [
-        { text: 'Batal', style: 'cancel' },
-        {
-          text: 'Logout',
-          style: 'destructive',
-          onPress: () => logout(),
-        },
-      ]
-    );
+    if (Platform.OS === 'web') {
+      const confirmed = window.confirm('Apakah Anda yakin ingin keluar?');
+      if (confirmed) {
+        logout();
+      }
+    } else {
+      Alert.alert(
+        'Konfirmasi Logout',
+        'Apakah Anda yakin ingin keluar?',
+        [
+          { text: 'Batal', style: 'cancel' },
+          {
+            text: 'Logout',
+            style: 'destructive',
+            onPress: async () => {
+              try {
+                await logout();
+              } catch (error) {
+                Alert.alert('Error', 'Gagal logout. Silakan coba lagi.');
+              }
+            },
+          },
+        ]
+      );
+    }
   };
 
   const totalBalance = students.reduce((sum, student) => sum + student.balance, 0);
@@ -43,7 +56,14 @@ export default function ProfileScreen() {
     <ScrollView style={container.screen}>
       <View style={common.p5}>
         {/* User Info Card */}
-        <View style={[common.bgWhite, common.roundedXl, common.p5, common.itemsCenter, { marginBottom: 20 }, common.shadow]}>
+        <View style={[
+          common.bgWhite,
+          common.roundedXl,
+          common.p5,
+          common.itemsCenter,
+          { marginBottom: 20 },
+          common.shadow
+        ]}>
           <View style={[
             { width: 80, height: 80 },
             common.roundedFull,
@@ -128,12 +148,20 @@ export default function ProfileScreen() {
             ℹ️ Informasi Aplikasi
           </Text>
           
-          <View style={[common.flexRow, common.justifyBetween, { paddingVertical: 12, borderBottomWidth: 1, borderBottomColor: colors.gray[50] }]}>
+          <View style={[
+            common.flexRow,
+            common.justifyBetween,
+            { paddingVertical: 12, borderBottomWidth: 1, borderBottomColor: colors.gray[50] }
+          ]}>
             <Text style={[common.textSm, common.textGray500]}>Versi Aplikasi</Text>
             <Text style={[common.textSm, common.fontSemibold, common.textBlack]}>1.0.0</Text>
           </View>
           
-          <View style={[common.flexRow, common.justifyBetween, { paddingVertical: 12, borderBottomWidth: 1, borderBottomColor: colors.gray[50] }]}>
+          <View style={[
+            common.flexRow,
+            common.justifyBetween,
+            { paddingVertical: 12, borderBottomWidth: 1, borderBottomColor: colors.gray[50] }
+          ]}>
             <Text style={[common.textSm, common.textGray500]}>Platform</Text>
             <Text style={[common.textSm, common.fontSemibold, common.textBlack]}>Expo React Native</Text>
           </View>
@@ -146,8 +174,18 @@ export default function ProfileScreen() {
 
         {/* Logout Button */}
         <TouchableOpacity 
-          style={[common.flexRow, common.justifyCenter, common.itemsCenter, common.bgDanger, common.p4, common.roundedLg, common.shadowLg, { marginBottom: 20 }]}
+          style={[
+            common.flexRow,
+            common.justifyCenter,
+            common.itemsCenter,
+            common.bgDanger,
+            common.p4,
+            common.roundedLg,
+            common.shadowLg,
+            { marginBottom: 20 }
+          ]}
           onPress={handleLogout}
+          activeOpacity={0.8}
         >
           <Text style={{ fontSize: 20, marginRight: 8 }}>🚪</Text>
           <Text style={[common.textLg, common.fontSemibold, common.textWhite]}>
@@ -156,7 +194,12 @@ export default function ProfileScreen() {
         </TouchableOpacity>
 
         {/* Footer */}
-        <Text style={[common.textXs, common.textGray500, common.textCenter, { marginBottom: 40, lineHeight: 18 }]}>
+        <Text style={[
+          common.textXs,
+          common.textGray500,
+          common.textCenter,
+          { marginBottom: 40, lineHeight: 18 }
+        ]}>
           Sistem Tabungan Siswa SD{'\n'}© 2025 - Semua Hak Dilindungi
         </Text>
       </View>

@@ -3,11 +3,11 @@ import { User, Student, Transaction } from '../types';
 import * as StorageService from '../services/storageService';
 
 interface StoreState {
-  // Auth
+  // Auth State
   user: User | null;
   isAuthenticated: boolean;
   
-  // Data
+  // Data State
   students: Student[];
   transactions: Transaction[];
   
@@ -38,18 +38,18 @@ interface StoreState {
     totalWithdrawals: number;
   }>;
   
-  // Load initial data
+  // Initial Load
   loadData: () => Promise<void>;
 }
 
 const useStore = create<StoreState>((set, get) => ({
-  // Initial State
+  // ========== Initial State ==========
   user: null,
   isAuthenticated: false,
   students: [],
   transactions: [],
   
-  // Load Data from Storage
+  // ========== Load Data from Storage ==========
   loadData: async () => {
     try {
       const user = await StorageService.getUser();
@@ -67,171 +67,214 @@ const useStore = create<StoreState>((set, get) => ({
     }
   },
   
-  // Auth Actions
+  // ========== Auth Actions ==========
   login: async (user: User) => {
-    await StorageService.saveUser(user);
-    set({ user, isAuthenticated: true });
+    try {
+      await StorageService.saveUser(user);
+      set({ user, isAuthenticated: true });
+    } catch (error) {
+      console.error('Error during login:', error);
+      throw error;
+    }
   },
   
   logout: async () => {
-    await StorageService.clearUser();
-    set({ user: null, isAuthenticated: false });
+    try {
+      await StorageService.clearUser();
+      set({
+        user: null,
+        isAuthenticated: false,
+      });
+    } catch (error) {
+      console.error('Error during logout:', error);
+      throw error;
+    }
   },
   
-  // Student Actions
+  // ========== Student Actions ==========
   addStudent: async (studentData) => {
-    const newStudent: Student = {
-      ...studentData,
-      id: Date.now().toString(),
-      balance: 0,
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString(),
-    };
-    
-    const updatedStudents = [...get().students, newStudent];
-    await StorageService.saveStudents(updatedStudents);
-    set({ students: updatedStudents });
+    try {
+      const newStudent: Student = {
+        ...studentData,
+        id: Date.now().toString(),
+        balance: 0,
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+      };
+      
+      const updatedStudents = [...get().students, newStudent];
+      await StorageService.saveStudents(updatedStudents);
+      set({ students: updatedStudents });
+    } catch (error) {
+      console.error('Error adding student:', error);
+      throw error;
+    }
   },
   
   updateStudent: async (id, updates) => {
-    const updatedStudents = get().students.map((student) =>
-      student.id === id
-        ? { ...student, ...updates, updatedAt: new Date().toISOString() }
-        : student
-    );
-    
-    await StorageService.saveStudents(updatedStudents);
-    set({ students: updatedStudents });
+    try {
+      const updatedStudents = get().students.map((student) =>
+        student.id === id
+          ? { ...student, ...updates, updatedAt: new Date().toISOString() }
+          : student
+      );
+      
+      await StorageService.saveStudents(updatedStudents);
+      set({ students: updatedStudents });
+    } catch (error) {
+      console.error('Error updating student:', error);
+      throw error;
+    }
   },
   
   deleteStudent: async (id) => {
-    const updatedStudents = get().students.filter((s) => s.id !== id);
-    const updatedTransactions = get().transactions.filter((t) => t.studentId !== id);
-    
-    await StorageService.saveStudents(updatedStudents);
-    await StorageService.saveTransactions(updatedTransactions);
-    
-    set({ 
-      students: updatedStudents,
-      transactions: updatedTransactions 
-    });
+    try {
+      const updatedStudents = get().students.filter((s) => s.id !== id);
+      const updatedTransactions = get().transactions.filter((t) => t.studentId !== id);
+      
+      await StorageService.saveStudents(updatedStudents);
+      await StorageService.saveTransactions(updatedTransactions);
+      
+      set({ 
+        students: updatedStudents,
+        transactions: updatedTransactions 
+      });
+    } catch (error) {
+      console.error('Error deleting student:', error);
+      throw error;
+    }
   },
   
   getStudentById: (id) => {
     return get().students.find((s) => s.id === id);
   },
   
-  // Transaction Actions
+  // ========== Transaction Actions ==========
   addTransaction: async (transactionData) => {
-    const newTransaction: Transaction = {
-      ...transactionData,
-      id: Date.now().toString(),
-    };
-    
-    // Update student balance
-    const updatedStudents = get().students.map((student) => {
-      if (student.id === transactionData.studentId) {
-        const newBalance = transactionData.type === 'deposit'
-          ? student.balance + transactionData.amount
-          : student.balance - transactionData.amount;
-        
-        return {
-          ...student,
-          balance: newBalance,
-          updatedAt: new Date().toISOString(),
-        };
-      }
-      return student;
-    });
-    
-    const updatedTransactions = [...get().transactions, newTransaction];
-    
-    await StorageService.saveStudents(updatedStudents);
-    await StorageService.saveTransactions(updatedTransactions);
-    
-    set({ 
-      students: updatedStudents,
-      transactions: updatedTransactions 
-    });
+    try {
+      const newTransaction: Transaction = {
+        ...transactionData,
+        id: Date.now().toString(),
+      };
+      
+      // Update student balance
+      const updatedStudents = get().students.map((student) => {
+        if (student.id === transactionData.studentId) {
+          const newBalance = transactionData.type === 'deposit'
+            ? student.balance + transactionData.amount
+            : student.balance - transactionData.amount;
+          
+          return {
+            ...student,
+            balance: newBalance,
+            updatedAt: new Date().toISOString(),
+          };
+        }
+        return student;
+      });
+      
+      const updatedTransactions = [...get().transactions, newTransaction];
+      
+      await StorageService.saveStudents(updatedStudents);
+      await StorageService.saveTransactions(updatedTransactions);
+      
+      set({ 
+        students: updatedStudents,
+        transactions: updatedTransactions 
+      });
+    } catch (error) {
+      console.error('Error adding transaction:', error);
+      throw error;
+    }
   },
   
   updateTransaction: async (id, updates) => {
-    const oldTransaction = get().transactions.find((t) => t.id === id);
-    if (!oldTransaction) return;
-    
-    const updatedTransactions = get().transactions.map((t) =>
-      t.id === id ? { ...t, ...updates } : t
-    );
-    
-    // Recalculate student balance
-    let updatedStudents = get().students;
-    
-    // Revert old transaction
-    updatedStudents = updatedStudents.map((student) => {
-      if (student.id === oldTransaction.studentId) {
-        const revertAmount = oldTransaction.type === 'deposit'
-          ? student.balance - oldTransaction.amount
-          : student.balance + oldTransaction.amount;
-        return { ...student, balance: revertAmount };
-      }
-      return student;
-    });
-    
-    // Apply new transaction
-    const newTransaction = updatedTransactions.find((t) => t.id === id)!;
-    updatedStudents = updatedStudents.map((student) => {
-      if (student.id === newTransaction.studentId) {
-        const newBalance = newTransaction.type === 'deposit'
-          ? student.balance + newTransaction.amount
-          : student.balance - newTransaction.amount;
-        
-        return {
-          ...student,
-          balance: newBalance,
-          updatedAt: new Date().toISOString(),
-        };
-      }
-      return student;
-    });
-    
-    await StorageService.saveStudents(updatedStudents);
-    await StorageService.saveTransactions(updatedTransactions);
-    
-    set({ 
-      students: updatedStudents,
-      transactions: updatedTransactions 
-    });
+    try {
+      const oldTransaction = get().transactions.find((t) => t.id === id);
+      if (!oldTransaction) return;
+      
+      const updatedTransactions = get().transactions.map((t) =>
+        t.id === id ? { ...t, ...updates } : t
+      );
+      
+      // Recalculate student balance
+      let updatedStudents = get().students;
+      
+      // Revert old transaction
+      updatedStudents = updatedStudents.map((student) => {
+        if (student.id === oldTransaction.studentId) {
+          const revertAmount = oldTransaction.type === 'deposit'
+            ? student.balance - oldTransaction.amount
+            : student.balance + oldTransaction.amount;
+          return { ...student, balance: revertAmount };
+        }
+        return student;
+      });
+      
+      // Apply new transaction
+      const newTransaction = updatedTransactions.find((t) => t.id === id)!;
+      updatedStudents = updatedStudents.map((student) => {
+        if (student.id === newTransaction.studentId) {
+          const newBalance = newTransaction.type === 'deposit'
+            ? student.balance + newTransaction.amount
+            : student.balance - newTransaction.amount;
+          
+          return {
+            ...student,
+            balance: newBalance,
+            updatedAt: new Date().toISOString(),
+          };
+        }
+        return student;
+      });
+      
+      await StorageService.saveStudents(updatedStudents);
+      await StorageService.saveTransactions(updatedTransactions);
+      
+      set({ 
+        students: updatedStudents,
+        transactions: updatedTransactions 
+      });
+    } catch (error) {
+      console.error('Error updating transaction:', error);
+      throw error;
+    }
   },
   
   deleteTransaction: async (id) => {
-    const transaction = get().transactions.find((t) => t.id === id);
-    if (!transaction) return;
-    
-    // Revert balance
-    const updatedStudents = get().students.map((student) => {
-      if (student.id === transaction.studentId) {
-        const newBalance = transaction.type === 'deposit'
-          ? student.balance - transaction.amount
-          : student.balance + transaction.amount;
-        
-        return {
-          ...student,
-          balance: newBalance,
-          updatedAt: new Date().toISOString(),
-        };
-      }
-      return student;
-    });
-    
-    const updatedTransactions = get().transactions.filter((t) => t.id !== id);
-    
-    await StorageService.saveStudents(updatedStudents);
-    await StorageService.saveTransactions(updatedTransactions);
-    
-    set({ 
-      students: updatedStudents,
-      transactions: updatedTransactions 
-    });
+    try {
+      const transaction = get().transactions.find((t) => t.id === id);
+      if (!transaction) return;
+      
+      // Revert balance
+      const updatedStudents = get().students.map((student) => {
+        if (student.id === transaction.studentId) {
+          const newBalance = transaction.type === 'deposit'
+            ? student.balance - transaction.amount
+            : student.balance + transaction.amount;
+          
+          return {
+            ...student,
+            balance: newBalance,
+            updatedAt: new Date().toISOString(),
+          };
+        }
+        return student;
+      });
+      
+      const updatedTransactions = get().transactions.filter((t) => t.id !== id);
+      
+      await StorageService.saveStudents(updatedStudents);
+      await StorageService.saveTransactions(updatedTransactions);
+      
+      set({ 
+        students: updatedStudents,
+        transactions: updatedTransactions 
+      });
+    } catch (error) {
+      console.error('Error deleting transaction:', error);
+      throw error;
+    }
   },
   
   getTransactionById: (id) => {
@@ -242,7 +285,7 @@ const useStore = create<StoreState>((set, get) => ({
     return get().transactions.filter((t) => t.studentId === studentId);
   },
   
-  // Report Actions
+  // ========== Report Actions ==========
   getClassReport: () => {
     const students = get().students;
     const transactions = get().transactions;
