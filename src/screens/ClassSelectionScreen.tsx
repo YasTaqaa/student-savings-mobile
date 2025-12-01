@@ -1,14 +1,9 @@
-import React, { useMemo } from 'react';
-import {
-  View,
-  Text,
-  TouchableOpacity,
-  ScrollView,
-} from 'react-native';
+import React from 'react';
+import { View, Text, TouchableOpacity, ScrollView, Platform } from 'react-native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
-import { StudentStackParamList, ClassGroup } from '../types';
+import { StudentStackParamList } from '../types';
 import useStore from '../store/useStore';
-import { common, colors, container, fab } from '../styles/utils';
+import { common, container, colors } from '../styles/utils';
 
 type NavigationProp = NativeStackNavigationProp<StudentStackParamList, 'ClassSelection'>;
 
@@ -17,150 +12,139 @@ interface Props {
 }
 
 export default function ClassSelectionScreen({ navigation }: Props) {
+  const user = useStore((state) => state.user);
   const students = useStore((state) => state.students);
-
-  const classGroups = useMemo((): ClassGroup[] => {
-    const groups: ClassGroup[] = [];
-    
-    for (let grade = 1; grade <= 6; grade++) {
-      const gradeStudents = students.filter((s) => s.grade === grade);
-      const totalBalance = gradeStudents.reduce((sum, s) => sum + s.balance, 0);
-
-      const classesInGrade: string[] = [];
-      gradeStudents.forEach((s) => {
-        if (!classesInGrade.includes(s.class)) {
-          classesInGrade.push(s.class);
-        }
-      });
-
-      groups.push({
-        grade,
-        title: `Kelas ${grade}`,
-        classes: classesInGrade.sort(),
-        totalStudents: gradeStudents.length,
-        totalBalance,
-      });
-    }
-
-    return groups.filter((g) => g.totalStudents > 0);
-  }, [students]);
   
-  const formatCurrency = (amount: number) => {
-    return `Rp ${amount.toLocaleString('id-ID')}`;
+  // Hitung jumlah siswa per kelas
+  const getStudentCount = (grade: number) => {
+    return students.filter((s) => s.grade === grade).length;
   };
-
-  const getTotalStats = () => {
-    const total = classGroups.reduce(
-      (acc, group) => ({
-        students: acc.students + group.totalStudents,
-        balance: acc.balance + group.totalBalance,
-      }),
-      { students: 0, balance: 0 }
-    );
-    return total;
+  
+  const getTotalStudents = () => {
+    return students.length;
   };
-
-  const totalStats = getTotalStats();
-
+  
+  const handleSelectClass = (grade: number) => {
+    navigation.navigate('StudentList', { grade });
+  };
+  
+  // Daftar kelas 1-6
+  const classes = [
+    { grade: 0, label: 'Semua Kelas', icon: '📚', color: colors.primary },
+    { grade: 1, label: 'Kelas 1', icon: '1️⃣', color: '#FF6B6B' },
+    { grade: 2, label: 'Kelas 2', icon: '2️⃣', color: '#4ECDC4' },
+    { grade: 3, label: 'Kelas 3', icon: '3️⃣', color: '#FFD93D' },
+    { grade: 4, label: 'Kelas 4', icon: '4️⃣', color: '#95E1D3' },
+    { grade: 5, label: 'Kelas 5', icon: '5️⃣', color: '#F38181' },
+    { grade: 6, label: 'Kelas 6', icon: '6️⃣', color: '#AA96DA' },
+  ];
+  
   return (
-    <View style={container.screen}>
-      {/* Header Summary */}
-      <View style={[common.bgPrimary, common.p5]}>
-        <Text style={[common.text2xl, common.fontBold, common.textWhite, common.mb1]}>
-          📚 Pilih Kelas
+    <ScrollView style={container.screen}>
+      <View style={common.p5}>
+        {/* Header */}
+        <View style={[common.bgWhite, common.p4, common.rounded, common.shadow, common.mb4]}>
+          <Text style={[common.textXl, common.fontBold, common.textBlack]}>
+            👋 Halo, {user?.name}
+          </Text>
+          <Text style={[common.textSm, common.textGray500, { marginTop: 4 }]}>
+            Pilih kelas untuk mengelola data siswa
+          </Text>
+        </View>
+        
+        {/* Total Students Card */}
+        <View style={[
+          common.bgPrimary,
+          common.rounded,
+          common.p4,
+          common.shadow,
+          common.mb4,
+          common.itemsCenter
+        ]}>
+          <Text style={[common.textSm, common.textWhite, { opacity: 0.9 }]}>
+            Total Siswa Terdaftar
+          </Text>
+          <Text style={[common.fontBold, common.textWhite, { fontSize: 36, marginTop: 4 }]}>
+            {getTotalStudents()}
+          </Text>
+          <Text style={[common.textXs, common.textWhite, { opacity: 0.8, marginTop: 4 }]}>
+            Siswa dari semua tingkat
+          </Text>
+        </View>
+        
+        {/* Class Grid */}
+        <Text style={[common.textLg, common.fontBold, common.textBlack, common.mb3]}>
+          📖 Pilih Kelas
         </Text>
-        <Text style={[common.textSm, common.textWhite, { opacity: 0.9 }]}>
-          {totalStats.students} siswa • {formatCurrency(totalStats.balance)}
-        </Text>
-      </View>
-
-      <ScrollView 
-        contentContainerStyle={{ padding: 16, paddingBottom: 100 }}
-        showsVerticalScrollIndicator={false}
-      >
-        {classGroups.length > 0 ? (
-          classGroups.map((group) => (
-            <TouchableOpacity
-              key={group.grade}
-              style={[common.bgWhite, common.roundedXl, common.p5, common.shadow, common.mb4]}
-              onPress={() => navigation.navigate('StudentList', { grade: group.grade })}
-              activeOpacity={0.7}
-            >
-              <View style={[common.flexRow, common.itemsCenter, common.mb4]}>
-                <View style={[
-                  { width: 56, height: 56 },
-                  common.roundedFull,
-                  common.bgPrimary,
-                  common.justifyCenter,
+        
+        <View style={{ gap: 12 }}>
+          {classes.map((cls) => {
+            const studentCount = cls.grade === 0 ? getTotalStudents() : getStudentCount(cls.grade);
+            
+            return (
+              <TouchableOpacity
+                key={cls.grade}
+                style={[
+                  common.bgWhite,
+                  common.rounded,
+                  common.p4,
+                  common.shadow,
+                  common.flexRow,
                   common.itemsCenter,
-                  common.mr2
-                ]}>
-                  <Text style={[common.text3xl, common.fontBold, common.textWhite]}>
-                    {group.grade}
-                  </Text>
+                  common.justifyBetween,
+                  { 
+                    borderLeftWidth: 4,
+                    borderLeftColor: cls.color,
+                  }
+                ]}
+                onPress={() => handleSelectClass(cls.grade)}
+                activeOpacity={0.7}
+              >
+                <View style={[common.flexRow, common.itemsCenter, { gap: 12 }]}>
+                  <View style={[
+                    common.rounded,
+                    common.justifyCenter,
+                    common.itemsCenter,
+                    {
+                      width: 56,
+                      height: 56,
+                      backgroundColor: cls.color + '20',
+                    }
+                  ]}>
+                    <Text style={{ fontSize: 28 }}>
+                      {cls.icon}
+                    </Text>
+                  </View>
+                  
+                  <View>
+                    <Text style={[common.textLg, common.fontBold, common.textBlack]}>
+                      {cls.label}
+                    </Text>
+                    <Text style={[common.textSm, common.textGray500]}>
+                      {studentCount} siswa
+                    </Text>
+                  </View>
                 </View>
                 
-                <View style={common.flex1}>
-                  <Text style={[common.textXl, common.fontBold, common.textBlack, common.mb1]}>
-                    {group.title}
-                  </Text>
-                  <Text style={[common.textSm, common.textGray500]}>
-                    {group.classes.join(', ') || 'Belum ada kelas'}
-                  </Text>
-                </View>
-
-                <View style={[
-                  { width: 32, height: 32 },
-                  common.roundedFull,
-                  common.bgGray50,
-                  common.justifyCenter,
-                  common.itemsCenter
-                ]}>
-                  <Text style={[common.text2xl, common.textPrimary, common.fontBold]}>›</Text>
-                </View>
-              </View>
-
-              <View style={[common.flexRow, common.borderB, common.borderGray100, { paddingTop: 16 }]}>
-                <View style={[common.flex1, common.itemsCenter]}>
-                  <Text style={{ fontSize: 24, marginBottom: 4 }}>👨‍🎓</Text>
-                  <Text style={[common.textXs, common.textGray500, common.mb1]}>Siswa</Text>
-                  <Text style={[common.textSm, common.fontSemibold, common.textBlack]}>
-                    {group.totalStudents}
-                  </Text>
-                </View>
-
-                <View style={{ width: 1, backgroundColor: colors.gray[100], marginHorizontal: 16 }} />
-
-                <View style={[common.flex1, common.itemsCenter]}>
-                  <Text style={{ fontSize: 24, marginBottom: 4 }}>💰</Text>
-                  <Text style={[common.textXs, common.textGray500, common.mb1]}>Total Saldo</Text>
-                  <Text style={[common.textSm, common.fontSemibold, common.textBlack, common.textCenter]}>
-                    {formatCurrency(group.totalBalance)}
-                  </Text>
-                </View>
-              </View>
-            </TouchableOpacity>
-          ))
-        ) : (
-          <View style={[common.itemsCenter, { marginTop: 100, paddingHorizontal: 40 }]}>
-            <Text style={{ fontSize: 80, marginBottom: 20 }}>📚</Text>
-            <Text style={[common.textXl, common.fontSemibold, common.textBlack, common.mb2, common.textCenter]}>
-              Belum ada siswa
-            </Text>
-            <Text style={[common.textSm, common.textGray500, common.textCenter, { lineHeight: 20 }]}>
-              Tambahkan siswa baru dari tombol + di bawah
-            </Text>
-          </View>
-        )}
-      </ScrollView>
-      
-      <TouchableOpacity
-        style={fab.base}
-        onPress={() => navigation.navigate('StudentList', { grade: 0 })}
-        activeOpacity={0.8}
-      >
-        <Text style={fab.text}>+</Text>
-      </TouchableOpacity>
-    </View>
+                <Text style={{ fontSize: 20, opacity: 0.5 }}>›</Text>
+              </TouchableOpacity>
+            );
+          })}
+        </View>
+        
+        {/* Info Card */}
+        <View style={[
+          common.bgGray50,
+          common.rounded,
+          common.p4,
+          { marginTop: 20, marginBottom: 40 }
+        ]}>
+          <Text style={[common.textSm, common.textGray500, common.textCenter]}>
+            💡 Pilih "Semua Kelas" untuk melihat semua siswa{'\n'}
+            atau pilih kelas tertentu untuk filter
+          </Text>
+        </View>
+      </View>
+    </ScrollView>
   );
 }
