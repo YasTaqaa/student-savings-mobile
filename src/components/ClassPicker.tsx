@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { View, Text, TouchableOpacity, Modal, StyleSheet } from 'react-native';
+import { View, Text, TouchableOpacity, Modal } from 'react-native';
 import { common, input, button, colors } from '../styles/utils';
 
 interface ClassPickerProps {
@@ -56,32 +56,64 @@ export default function ClassPicker({
         transparent
         onRequestClose={() => setModalVisible(false)}
       >
-        <View style={styles.modalOverlay}>
-          <View style={styles.modalContent}>
-            <Text style={styles.modalTitle}>
+        <View style={[
+          common.flex1,
+          common.justifyCenter,
+          common.itemsCenter,
+          { backgroundColor: 'rgba(0, 0, 0, 0.5)', padding: 20 }
+        ]}>
+          <View style={[
+            common.bgWhite,
+            common.roundedXl,
+            common.shadowLg,
+            { padding: 24, width: '100%', maxWidth: 340 }
+          ]}>
+            <Text style={[
+              common.textXl,
+              common.fontBold,
+              common.textBlack,
+              common.textCenter,
+              common.mb4
+            ]}>
               {preselectedGrade ? `Kelas ${preselectedGrade}` : 'Pilih Kelas'}
             </Text>
             
-            <View style={styles.gradeContainer}>
-              {availableGrades.map((grade, index) => {
+            <View style={[
+              common.flexRow,
+              { justifyContent: 'space-between', marginBottom: 16, flexWrap: 'wrap' }
+            ]}>
+              {availableGrades.map((grade) => {
                 const isSelected = selectedClass === `${grade}`;
                 
                 return (
                   <TouchableOpacity
                     key={grade}
                     style={[
-                      styles.gradeCard,
-                      isSelected && styles.gradeCardSelected
+                      common.justifyCenter,
+                      common.itemsCenter,
+                      common.rounded,
+                      {
+                        width: '31%',
+                        aspectRatio: 1,
+                        backgroundColor: isSelected ? colors.primary : colors.gray[50],
+                        borderRadius: 16,
+                        borderWidth: 2,
+                        borderColor: isSelected ? colors.primary : colors.gray[100],
+                        marginBottom: 12,
+                        padding: 12,
+                      }
                     ]}
                     onPress={() => handleSelect(grade)}
                     activeOpacity={0.7}
                   >
-                    <Text style={styles.gradeEmoji}>
+                    <Text style={{ fontSize: 36, marginBottom: 8 }}>
                       {gradeEmojis[grade - 1]}
                     </Text>
                     <Text style={[
-                      styles.gradeText,
-                      isSelected && styles.gradeTextSelected
+                      common.textSm,
+                      common.fontBold,
+                      common.textCenter,
+                      isSelected ? common.textWhite : common.textBlack
                     ]}>
                       Kelas {grade}
                     </Text>
@@ -91,11 +123,11 @@ export default function ClassPicker({
             </View>
             
             <TouchableOpacity
-              style={styles.closeButton}
+              style={button.secondary}
               onPress={() => setModalVisible(false)}
               activeOpacity={0.7}
             >
-              <Text style={styles.closeButtonText}>Tutup</Text>
+              <Text style={button.text}>Tutup</Text>
             </TouchableOpacity>
           </View>
         </View>
@@ -103,78 +135,3 @@ export default function ClassPicker({
     </View>
   );
 }
-
-const styles = StyleSheet.create({
-  modalOverlay: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    backgroundColor: 'rgba(0, 0, 0, 0.5)',
-    padding: 20,
-  },
-  modalContent: {
-    backgroundColor: '#FFFFFF',
-    borderRadius: 20,
-    padding: 24,
-    width: '100%',
-    maxWidth: 340,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.3,
-    shadowRadius: 8,
-    elevation: 8,
-  },
-  modalTitle: {
-    fontSize: 20,
-    fontWeight: '700',
-    color: '#000',
-    textAlign: 'center',
-    marginBottom: 24,
-  },
-  gradeContainer: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    justifyContent: 'space-between',
-    marginBottom: 24,
-  },
-  gradeCard: {
-    width: '31%',
-    aspectRatio: 1,
-    backgroundColor: '#F2F2F7',
-    borderRadius: 16,
-    borderWidth: 2,
-    borderColor: '#E5E5EA',
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginBottom: 12,
-    padding: 12,
-  },
-  gradeCardSelected: {
-    backgroundColor: '#007AFF',
-    borderColor: '#007AFF',
-  },
-  gradeEmoji: {
-    fontSize: 36,
-    marginBottom: 8,
-  },
-  gradeText: {
-    fontSize: 14,
-    fontWeight: '700',
-    color: '#000',
-    textAlign: 'center',
-  },
-  gradeTextSelected: {
-    color: '#FFFFFF',
-  },
-  closeButton: {
-    backgroundColor: '#F2F2F7',
-    paddingVertical: 14,
-    borderRadius: 12,
-    alignItems: 'center',
-  },
-  closeButtonText: {
-    color: '#000',
-    fontSize: 16,
-    fontWeight: '600',
-  },
-});

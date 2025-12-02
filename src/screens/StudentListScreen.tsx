@@ -34,7 +34,7 @@ export default function StudentListScreen({ navigation, route }: Props) {
   const [newStudent, setNewStudent] = useState({
     nis: '',
     name: '',
-    class: grade === 0 ? '' : `${grade}A`, // Auto set kelas jika bukan "Semua"
+    class: grade === 0 ? '' : `${grade}`, 
   });
   
   // Filter students by grade
@@ -95,7 +95,7 @@ export default function StudentListScreen({ navigation, route }: Props) {
       setNewStudent({
         nis: '',
         name: '',
-        class: grade === 0 ? '' : `${grade}A`,
+        class: grade === 0 ? '' : `${grade}`,
       });
       setModalVisible(false);
       
@@ -158,11 +158,10 @@ export default function StudentListScreen({ navigation, route }: Props) {
   };
   
   const openAddModal = () => {
-    // Auto set class sesuai grade yang dipilih
     setNewStudent({
       nis: '',
       name: '',
-      class: grade === 0 ? '' : `${grade}A`,
+      class: grade === 0 ? '' : `${grade}`,
     });
     setModalVisible(true);
   };
@@ -345,7 +344,7 @@ export default function StudentListScreen({ navigation, route }: Props) {
               <TouchableOpacity
                 style={[button.secondary, common.flex1]}
                 onPress={() => {
-                  setNewStudent({ nis: '', name: '', class: grade === 0 ? '' : `${grade}A` });
+                  setNewStudent({ nis: '', name: '', class: grade === 0 ? '' : `${grade}` });
                   setModalVisible(false);
                 }}
               >

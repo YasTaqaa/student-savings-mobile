@@ -154,7 +154,7 @@ export default function EditStudentScreen({ navigation, route }: Props) {
             />
           </View>
           <Text style={[common.textXs, common.textGray500, { marginTop: 4, fontStyle: 'italic' }]}>
-            💡 Saldo dapat diedit langsung atau melalui transaksi
+            💡 Saldo dapat diedit langsung
           </Text>
 
           <View style={[common.flexRow, { gap: 12, marginTop: 32, marginBottom: 40 }]}>

@@ -1,4 +1,5 @@
 {
+  "$schema": "https://json.schemastore.org/package.json",
   "name": "student-savings-mobile",
   "version": "1.0.0",
   "main": "index.ts",

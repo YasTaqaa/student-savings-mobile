@@ -1,5 +1,6 @@
 import React, { useEffect } from 'react';
 import { StatusBar } from 'expo-status-bar';
+import { SafeAreaProvider } from 'react-native-safe-area-context';
 import AppNavigator from './src/navigation/AppNavigator';
 import useStore from './src/store/useStore';
 
@@ -11,9 +12,9 @@ export default function App() {
   }, []);
 
   return (
-    <>
+    <SafeAreaProvider>
       <AppNavigator />
-      <StatusBar style="auto" />
-    </>
+      <StatusBar style="dark" />
+    </SafeAreaProvider>
   );
 }
