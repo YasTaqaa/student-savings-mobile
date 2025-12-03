@@ -15,7 +15,6 @@ export default function ClassSelectionScreen({ navigation }: Props) {
   const user = useStore((state) => state.user);
   const students = useStore((state) => state.students);
   
-  // Hitung jumlah siswa per kelas
   const getStudentCount = (grade: number) => {
     return students.filter((s) => s.grade === grade).length;
   };
@@ -28,7 +27,6 @@ export default function ClassSelectionScreen({ navigation }: Props) {
     navigation.navigate('StudentList', { grade });
   };
   
-  // Daftar kelas 1-6
   const classes = [
     { grade: 0, label: 'Semua Kelas', icon: '📚', color: colors.primary },
     { grade: 1, label: 'Kelas 1', icon: '1️⃣', color: '#FF6B6B' },
@@ -42,17 +40,6 @@ export default function ClassSelectionScreen({ navigation }: Props) {
   return (
     <ScrollView style={container.screen}>
       <View style={common.p5}>
-        {/* Header */}
-        <View style={[common.bgWhite, common.p4, common.rounded, common.shadow, common.mb4]}>
-          <Text style={[common.textXl, common.fontBold, common.textBlack]}>
-            👋 Halo, {user?.name}
-          </Text>
-          <Text style={[common.textSm, common.textGray500, { marginTop: 4 }]}>
-            Pilih kelas untuk mengelola data siswa
-          </Text>
-        </View>
-        
-        {/* Total Students Card */}
         <View style={[
           common.bgPrimary,
           common.rounded,
@@ -72,7 +59,6 @@ export default function ClassSelectionScreen({ navigation }: Props) {
           </Text>
         </View>
         
-        {/* Class Grid */}
         <Text style={[common.textLg, common.fontBold, common.textBlack, common.mb3]}>
           📖 Pilih Kelas
         </Text>
