@@ -1,6 +1,6 @@
 {
   "expo": {
-    "name": "student-savings-mobile",
+    "name": "Pencatatan Tabungan Siswa",
     "slug": "student-savings-mobile",
     "version": "1.0.0",
     "orientation": "portrait",
@@ -21,10 +21,16 @@
         "backgroundColor": "#ffffff"
       },
       "edgeToEdgeEnabled": true,
-      "predictiveBackGestureEnabled": false
+      "predictiveBackGestureEnabled": false,
+      "package": "com.sd.tabungan"
     },
     "web": {
       "favicon": "./assets/favicon.png"
+    },
+    "extra": {
+      "eas": {
+        "projectId": "800f8a06-1591-4c5a-a09c-0b209b249de3"
+      }
     }
   }
 }

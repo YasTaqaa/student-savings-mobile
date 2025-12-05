@@ -1,6 +1,5 @@
 import { StyleSheet, TextStyle, ViewStyle } from 'react-native';
 
-// Colors
 export const colors = {
   primary: '#007AFF',
   success: '#34C759',
@@ -19,9 +18,7 @@ export const colors = {
   }
 };
 
-// Common styles
 export const common = StyleSheet.create({
-  // Layout
   flex1: {
     flex: 1,
   },
@@ -38,7 +35,6 @@ export const common = StyleSheet.create({
     justifyContent: 'space-between',
   },
   
-  // Background
   bgWhite: {
     backgroundColor: colors.white,
   },
@@ -61,7 +57,6 @@ export const common = StyleSheet.create({
     backgroundColor: '#E8F4FD',
   },
   
-  // Padding
   p2: {
     padding: 8,
   },
@@ -87,7 +82,6 @@ export const common = StyleSheet.create({
     paddingVertical: 16,
   },
   
-  // Margin
   mt2: {
     marginTop: 8,
   },
@@ -116,7 +110,6 @@ export const common = StyleSheet.create({
     marginRight: 8,
   },
   
-  // Text Colors
   textWhite: {
     color: colors.white,
   },
