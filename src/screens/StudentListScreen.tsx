@@ -90,6 +90,7 @@ export default function StudentListScreen({ navigation, route }: Props) {
         grade: studentGrade,
         nis: newStudent.nis.trim(),
         name: newStudent.name.trim(),
+        category: ''
       });
       
       setNewStudent({

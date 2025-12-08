@@ -6,6 +6,7 @@ export interface User {
 }
 
 export interface Student {
+  category: string;
   id: string;
   nis: string;
   name: string;
