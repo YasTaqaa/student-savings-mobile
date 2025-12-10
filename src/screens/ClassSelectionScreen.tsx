@@ -118,7 +118,6 @@ export default function ClassSelectionScreen({ navigation }: Props) {
           })}
         </View>
         
-        {/* Info Card */}
         <View style={[
           common.bgGray50,
           common.rounded,
