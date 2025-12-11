@@ -13,14 +13,16 @@ import {
   generateClassReportPDF,
   shareClassReportPDF,
   ClassReport,
+  Student,
+  Transaction,
 } from '../services/pdfService';
 
 export default function ReportScreen() {
   const [loadingGrade, setLoadingGrade] = useState<number | null>(null);
 
   const user = useStore((state) => state.user);
-  const students = useStore((state) => state.students);
-  const transactions = useStore((state) => state.transactions);
+  const students = useStore((state) => state.students) as Student[];
+  const transactions = useStore((state) => state.transactions) as Transaction[];
 
   const classReports: ClassReport[] = useMemo(() => {
     const gradeGroups = new Map<number, typeof students>();
@@ -146,11 +148,7 @@ export default function ReportScreen() {
       {/* Summary cards */}
       <View style={common.p5}>
         <View
-          style={[
-            common.flexRow,
-            common.justifyBetween,
-            common.mb4,
-          ]}
+          style={[common.flexRow, common.justifyBetween, common.mb4]}
         >
           <View
             style={[
@@ -198,11 +196,7 @@ export default function ReportScreen() {
         </View>
 
         <View
-          style={[
-            common.flexRow,
-            common.justifyBetween,
-            common.mb4,
-          ]}
+          style={[common.flexRow, common.justifyBetween, common.mb4]}
         >
           <View
             style={[
@@ -457,7 +451,7 @@ export default function ReportScreen() {
                   {loadingGrade === report.grade ? (
                     <ActivityIndicator color={colors.white} />
                   ) : (
-                    <Text style={button.textWhite}>📥 Export</Text>
+                    <Text style={button.textWhite}>📥 Export PDF</Text>
                   )}
                 </TouchableOpacity>
 
