@@ -11,7 +11,6 @@ export interface ClassReport {
   className?: string;
 }
 
-// tipe minimal student & transaction
 export interface Student {
   id: string;
   name: string;
@@ -127,7 +126,6 @@ const buildPDFHTML = (
 `;
 };
 
-// EXPORT: pakai expo-print → PDF file per kelas
 export const generateClassReportPDF = async (
   classReport: ClassReport,
   students: Student[],
@@ -169,7 +167,6 @@ export const generateClassReportPDF = async (
   }
 };
 
-// BAGIKAN: pakai logika lama (Share.share teks)
 export const shareClassReportPDF = async (
   classReport: ClassReport,
   students: Student[],

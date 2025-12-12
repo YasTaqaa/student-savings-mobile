@@ -1,183 +1,345 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import {
   View,
   Text,
   TextInput,
   TouchableOpacity,
-  Alert,
   ScrollView,
-  KeyboardAvoidingView,
-  Platform,
+  Alert,
 } from 'react-native';
-import { NativeStackNavigationProp } from '@react-navigation/native-stack';
-import { RouteProp } from '@react-navigation/native';
-import { StudentStackParamList, getGradeFromClass } from '../types';
+import { NativeStackScreenProps } from '@react-navigation/native-stack';
+import { StudentStackParamList } from '../types';
 import useStore from '../store/useStore';
+import { common, container, button, colors, input } from '../styles/utils';
 import ClassPicker from '../components/ClassPicker';
-import { common, colors, container, button, input } from '../styles/utils';
 
-type NavigationProp = NativeStackNavigationProp<StudentStackParamList, 'EditStudent'>;
-type RouteProps = RouteProp<StudentStackParamList, 'EditStudent'>;
+type Props = NativeStackScreenProps<StudentStackParamList, 'EditStudent'>;
 
-interface Props {
-  navigation: NavigationProp;
-  route: RouteProps;
-}
-
-export default function EditStudentScreen({ navigation, route }: Props) {
+export default function EditStudentScreen({ route, navigation }: Props) {
   const { studentId } = route.params;
-  const student = useStore((state) => state.getStudentById(studentId));
+
+  const getStudentById = useStore((state) => state.getStudentById);
   const updateStudent = useStore((state) => state.updateStudent);
-  const students = useStore((state) => state.students);
+  const addTransaction = useStore((state) => state.addTransaction);
 
-  const [nis, setNis] = useState('');
-  const [name, setName] = useState('');
-  const [selectedClass, setSelectedClass] = useState('');
-  const [balance, setBalance] = useState('0');
-  const [loading, setLoading] = useState(false);
+  const student = getStudentById(studentId);
 
-  useEffect(() => {
-    if (student) {
-      setNis(student.nis);
-      setName(student.name);
-      setSelectedClass(student.class);
-      setBalance(student.balance.toString());
-    }
-  }, [student]);
+  const [nis, setNis] = useState(student?.nis || '');
+  const [name, setName] = useState(student?.name || '');
+  const [grade, setGrade] = useState<number>(student?.grade || 1);
+  const [studentClass, setStudentClass] = useState(student?.class || '');
+
+  const currentBalance = student?.balance || 0;
+
+  const [depositAmount, setDepositAmount] = useState('');
+  const [withdrawAmount, setWithdrawAmount] = useState('');
+  const [saving, setSaving] = useState(false);
 
   if (!student) {
     return (
-      <View style={container.screen}>
-        <Text style={[common.textCenter, common.textDanger, common.textBase, { marginTop: 40 }]}>
-          Data siswa tidak ditemukan
-        </Text>
+      <View
+        style={[
+          container.screen,
+          common.itemsCenter,
+          common.justifyCenter,
+        ]}
+      >
+        <Text style={common.textBase}>Data siswa tidak ditemukan.</Text>
       </View>
     );
   }
 
-  const handleUpdate = async () => {
-    if (!nis.trim() || !name.trim() || !selectedClass) {
-      Alert.alert('Error', 'NIS, Nama, dan Kelas harus diisi');
+  const parseAmount = (value: string) => {
+    const onlyNumber = value.replace(/[^0-9]/g, '');
+    return Number(onlyNumber || 0);
+  };
+
+  const handleSave = async () => {
+    if (!nis.trim() || !name.trim()) {
+      Alert.alert('Validasi', 'NIS dan Nama lengkap harus diisi');
       return;
     }
 
-    const balanceNum = parseFloat(balance);
-    if (isNaN(balanceNum) || balanceNum < 0) {
-      Alert.alert('Error', 'Saldo harus berupa angka dan tidak boleh negatif');
-      return;
-    }
-
-    const isDuplicate = students.some(
-      (s) => s.nis === nis.trim() && s.id !== studentId
-    );
-
-    if (isDuplicate) {
-      Alert.alert('Error', `NIS ${nis} sudah digunakan siswa lain`);
-      return;
-    }
-
-    setLoading(true);
-
+    setSaving(true);
     try {
-      const grade = getGradeFromClass(selectedClass);
-      
-      await updateStudent(studentId, {
+      await updateStudent(student.id, {
         nis: nis.trim(),
         name: name.trim(),
-        class: selectedClass,
         grade,
-        balance: balanceNum,
+        class: studentClass,
       });
 
-      // Langsung kembali
-      navigation.goBack();
+      // LANGSUNG KEMBALI KE DAFTAR SISWA
+      navigation.navigate('StudentList', { grade });
     } catch (error) {
-      Alert.alert('Error', 'Terjadi kesalahan saat menyimpan data');
+      console.error(error);
+      Alert.alert('Error', 'Gagal menyimpan data siswa');
     } finally {
-      setLoading(false);
+      setSaving(false);
     }
   };
 
-  const formatCurrency = (value: string) => {
-    const numericValue = value.replace(/[^0-9]/g, '');
-    if (numericValue === '') return '0';
-    return parseInt(numericValue).toLocaleString('id-ID');
+  const handleDeposit = async () => {
+    const amount = parseAmount(depositAmount);
+    if (!amount) {
+      Alert.alert('Validasi', 'Nominal setoran tidak boleh kosong');
+      return;
+    }
+
+    try {
+      await addTransaction({
+        studentId: student.id,
+        type: 'deposit',
+        amount,
+        date: new Date().toISOString(),
+        description: 'Setoran manual dari Edit Data Siswa',
+        createdBy: 'admin',
+        note: 'Setoran manual dari Edit Data Siswa',
+      });
+      setDepositAmount('');
+      Alert.alert('Sukses', 'Setoran berhasil ditambahkan');
+    } catch (error) {
+      console.error(error);
+      Alert.alert('Error', 'Gagal menambahkan setoran');
+    }
   };
 
-  const handleBalanceChange = (text: string) => {
-    const numericValue = text.replace(/[^0-9]/g, '');
-    setBalance(numericValue);
+  const handleWithdraw = async () => {
+    const amount = parseAmount(withdrawAmount);
+    if (!amount) {
+      Alert.alert('Validasi', 'Nominal penarikan tidak boleh kosong');
+      return;
+    }
+    if (amount > currentBalance) {
+      Alert.alert('Validasi', 'Saldo tidak mencukupi untuk penarikan ini');
+      return;
+    }
+
+    try {
+      await addTransaction({
+        studentId: student.id,
+        type: 'withdrawal',
+        amount,
+        date: new Date().toISOString(),
+        description: 'Penarikan manual dari Edit Data Siswa',
+        createdBy: 'admin',
+        note: 'Penarikan manual dari Edit Data Siswa',
+      });
+      setWithdrawAmount('');
+      Alert.alert('Sukses', 'Penarikan berhasil dilakukan');
+    } catch (error) {
+      console.error(error);
+      Alert.alert('Error', 'Gagal melakukan penarikan');
+    }
   };
 
   return (
-    <KeyboardAvoidingView
-      style={container.screen}
-      behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-    >
-      <ScrollView style={common.flex1}>
-        <View style={common.p5}>
-          <Text style={input.label}>NIS (Nomor Induk Siswa)</Text>
-          <TextInput
-            style={input.base}
-            placeholder="Masukkan NIS"
-            value={nis}
-            onChangeText={setNis}
-            keyboardType="numeric"
-            editable={!loading}
-          />
+    <ScrollView style={container.screen} contentContainerStyle={common.p5}>
+      <Text
+        style={[
+          common.text2xl,
+          common.fontBold,
+          common.mb4,
+          common.textBlack,
+        ]}
+      >
+        Edit Data Siswa
+      </Text>
 
-          <Text style={input.label}>Nama Lengkap</Text>
-          <TextInput
-            style={input.base}
-            placeholder="Masukkan nama lengkap"
-            value={name}
-            onChangeText={setName}
-            editable={!loading}
-          />
+      {/* NIS */}
+      <Text
+        style={[
+          common.textSm,
+          common.fontSemibold,
+          common.textGray700,
+        ]}
+      >
+        NIS (Nomor Induk Siswa)
+      </Text>
+      <TextInput
+        style={[input.base, common.mt1]}
+        value={nis}
+        onChangeText={setNis}
+        keyboardType="numeric"
+        placeholder="Masukkan NIS"
+      />
 
-          <ClassPicker
-            label="Kelas"
-            selectedClass={selectedClass}
-            onSelectClass={setSelectedClass}
-          />
+      {/* Nama */}
+      <Text
+        style={[
+          common.textSm,
+          common.fontSemibold,
+          common.textGray700,
+          common.mt4,
+        ]}
+      >
+        Nama Lengkap
+      </Text>
+      <TextInput
+        style={[input.base, common.mt1]}
+        value={name}
+        onChangeText={setName}
+        placeholder="Masukkan nama lengkap"
+      />
 
-          <Text style={input.label}>Saldo Tabungan</Text>
-          <View style={[input.base, common.flexRow, common.itemsCenter]}>
-            <Text style={[common.textBase, common.textGray500, common.mr2]}>Rp</Text>
-            <TextInput
-              style={[common.flex1, { fontSize: 16, padding: 0 }]}
-              placeholder="0"
-              value={formatCurrency(balance)}
-              onChangeText={handleBalanceChange}
-              keyboardType="numeric"
-              editable={!loading}
-            />
-          </View>
-          <Text style={[common.textXs, common.textGray500, { marginTop: 4, fontStyle: 'italic' }]}>
-            💡 Saldo dapat diedit langsung
+      {/* Kelas */}
+      <Text
+        style={[
+          common.textSm,
+          common.fontSemibold,
+          common.textGray700,
+          common.mt4,
+        ]}
+      >
+        Kelas
+      </Text>
+      <ClassPicker
+        label="Kelas"
+        selectedClass={studentClass}
+        onSelectClass={(cls) => {
+          setStudentClass(cls);
+          setGrade(Number(cls));
+        }}
+        preselectedGrade={grade}
+      />
+
+      {/* Saldo (read-only) */}
+      <Text
+        style={[
+          common.textSm,
+          common.fontSemibold,
+          common.textGray700,
+          common.mt4,
+        ]}
+      >
+        Saldo Tabungan
+      </Text>
+      <View
+        style={[
+          common.mt1,
+          common.p3,
+          common.bgGray100,
+          common.roundedLg,
+          common.flexRow,
+          common.itemsCenter,
+        ]}
+      >
+        <Text style={[common.textSm, common.textGray500]}>Rp</Text>
+        <Text
+          style={[
+            common.textLg,
+            common.fontBold,
+            common.textBlack,
+            common.mr2,
+          ]}
+        >
+          {currentBalance.toLocaleString('id-ID')}
+        </Text>
+      </View>
+      <Text
+        style={[
+          common.textXs,
+          common.textGray400,
+          common.mt1,
+        ]}
+      >
+        ⚡ Saldo tidak bisa diedit langsung. Gunakan Setor / Tarik di bawah.
+      </Text>
+
+      {/* Setor */}
+      <Text
+        style={[
+          common.textSm,
+          common.fontSemibold,
+          common.textGray700,
+          common.mt5,
+        ]}
+      >
+        Tambah Saldo (Setor)
+      </Text>
+      <TextInput
+        style={[input.base, common.mt1]}
+        value={depositAmount}
+        onChangeText={setDepositAmount}
+        keyboardType="numeric"
+        placeholder="Masukkan nominal setoran"
+      />
+      <TouchableOpacity
+        style={[button.primary, common.mt2]}
+        onPress={handleDeposit}
+      >
+        <Text style={button.textWhite}>Setor</Text>
+      </TouchableOpacity>
+
+      {/* Tarik */}
+      <Text
+        style={[
+          common.textSm,
+          common.fontSemibold,
+          common.textGray700,
+          common.mt5,
+        ]}
+      >
+        Tarik Saldo
+      </Text>
+      <TextInput
+        style={[input.base, common.mt1]}
+        value={withdrawAmount}
+        onChangeText={setWithdrawAmount}
+        keyboardType="numeric"
+        placeholder="Masukkan nominal penarikan"
+      />
+      <TouchableOpacity
+        style={[
+          button.secondary,
+          common.mt2,
+          { borderColor: colors.danger, borderWidth: 1 },
+        ]}
+        onPress={handleWithdraw}
+      >
+        <Text
+          style={[
+            common.textRed600,
+            common.fontSemibold,
+            common.textCenter,
+          ]}
+        >
+          Tarik
+        </Text>
+      </TouchableOpacity>
+
+      {/* Batal / Simpan */}
+      <View
+        style={[
+          common.mt5,
+          common.flexRow,
+          common.justifyBetween,
+        ]}
+      >
+        <TouchableOpacity
+          style={[button.secondary, { flex: 1, marginRight: 8 }]}
+          onPress={() => navigation.goBack()}
+          disabled={saving}
+        >
+          <Text
+            style={[
+              common.textBlack,
+              common.fontSemibold,
+              common.textCenter,
+            ]}
+          >
+            Batal
           </Text>
+        </TouchableOpacity>
 
-          <View style={[common.flexRow, { gap: 12, marginTop: 32, marginBottom: 40 }]}>
-            <TouchableOpacity
-              style={[button.secondary, common.flex1]}
-              onPress={() => navigation.goBack()}
-              disabled={loading}
-            >
-              <Text style={button.text}>Batal</Text>
-            </TouchableOpacity>
-
-            <TouchableOpacity
-              style={[button.primary, common.flex1, loading && { opacity: 0.6 }]}
-              onPress={handleUpdate}
-              disabled={loading}
-            >
-              <Text style={button.textWhite}>
-                {loading ? 'Menyimpan...' : 'Simpan'}
-              </Text>
-            </TouchableOpacity>
-          </View>
-        </View>
-      </ScrollView>
-    </KeyboardAvoidingView>
+        <TouchableOpacity
+          style={[button.primary, { flex: 1, marginLeft: 8 }]}
+          onPress={handleSave}
+          disabled={saving}
+        >
+          <Text style={button.textWhite}>Simpan</Text>
+        </TouchableOpacity>
+      </View>
+    </ScrollView>
   );
 }

@@ -19,6 +19,18 @@ export const colors = {
 };
 
 export const common = StyleSheet.create({
+  textGray700: {
+    color: colors.gray[600],
+  },
+  textGray400: {
+    color: colors.gray[400],
+  },
+  textRed600: {
+    color: '#DC2626',
+  },
+  mt1: {
+    marginTop: 4,
+  },
   flex1: {
     flex: 1,
   },
