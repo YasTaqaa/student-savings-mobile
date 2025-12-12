@@ -32,7 +32,7 @@ Aplikasi ini dibangun menggunakan:
 
 ## 👨‍💻 Pengembangan
 
-Repositori ini dikembangkan sebagai bagian dari Tugas Akhir oleh mahasiswa Universitas Amikom Purwokerto bekerja sama dengan SDN 3 Linggasari.
+Repositori ini dikembangkan sebagai bagian dari Tugas Akhir oleh mahasiswa Universitas Muhammadiyah Purwokerto bekerja sama dengan SDN 3 Linggasari.
 
 ---
 
