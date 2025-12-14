@@ -19,6 +19,23 @@ export const colors = {
 };
 
 export const common = StyleSheet.create({
+  title: {
+  color: colors.gray[600],
+  fontSize: 20,
+  fontWeight: '600',
+},
+
+subtitle: {
+  color: colors.gray[600],
+  fontSize: 16,
+  fontWeight: '500',
+},
+
+caption: {
+  color: colors.gray[400],
+  fontSize: 12,
+},
+
   textGray700: {
     color: colors.gray[600],
   },
@@ -366,4 +383,6 @@ export const fab = StyleSheet.create({
     color: colors.white,
     fontWeight: '300' as TextStyle['fontWeight'],
   },
+
+  
 });
