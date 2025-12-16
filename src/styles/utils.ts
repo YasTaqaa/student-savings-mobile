@@ -19,6 +19,48 @@ export const colors = {
 };
 
 export const common = StyleSheet.create({
+  modal: {
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.5)',
+    justifyContent: 'center',
+    padding: 20,
+  },
+  modalContent: {
+    backgroundColor: colors.white,
+    borderRadius: 20,
+    padding: 20,
+    maxHeight: '90%' as any,
+  },
+
+  title: {
+  color: colors.gray[600],
+  fontSize: 20,
+  fontWeight: '600',
+},
+
+subtitle: {
+  color: colors.gray[600],
+  fontSize: 16,
+  fontWeight: '500',
+},
+
+caption: {
+  color: colors.gray[400],
+  fontSize: 12,
+},
+
+  textGray700: {
+    color: colors.gray[600],
+  },
+  textGray400: {
+    color: colors.gray[400],
+  },
+  textRed600: {
+    color: '#DC2626',
+  },
+  mt1: {
+    marginTop: 4,
+  },
   flex1: {
     flex: 1,
   },
@@ -354,4 +396,6 @@ export const fab = StyleSheet.create({
     color: colors.white,
     fontWeight: '300' as TextStyle['fontWeight'],
   },
+
+  
 });

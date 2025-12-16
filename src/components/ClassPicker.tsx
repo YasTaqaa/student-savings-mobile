@@ -1,3 +1,4 @@
+// src/components/ClassPicker.tsx
 import React, { useState } from 'react';
 import { View, Text, TouchableOpacity, Modal } from 'react-native';
 import { common, input, button, colors } from '../styles/utils';
@@ -62,8 +63,9 @@ export default function ClassPicker({
           common.justifyBetween,
           common.itemsCenter,
         ]}
-        onPress={() => setModalVisible(true)}
-        activeOpacity={0.7}
+        onPress={() => !disabled && setModalVisible(true)}
+        activeOpacity={disabled ? 1 : 0.7}
+        disabled={disabled}
       >
         <Text
           style={[
@@ -73,7 +75,7 @@ export default function ClassPicker({
         >
           {selectedClass ? `Kelas ${selectedClass}` : 'Pilih kelas'}
         </Text>
-        <Text style={[common.textGray500, { fontSize: 12 }]}>▼</Text>
+        <Text style={common.textGray400}>▾</Text>
       </TouchableOpacity>
 
       {/* Modal */}
@@ -131,7 +133,8 @@ export default function ClassPicker({
                   <TouchableOpacity
                     key={cls}
                     style={[
-                      common.justifyCenter,
+                      button.secondary,
+                      common.flexRow,
                       common.itemsCenter,
                       {
                         width: '31%',
@@ -169,6 +172,14 @@ export default function ClassPicker({
                   </TouchableOpacity>
                 );
               })}
+
+              <TouchableOpacity
+                style={[button.primary, common.mt3]}
+                onPress={() => setModalVisible(false)}
+                activeOpacity={0.7}
+              >
+                <Text style={button.textWhite}>Tutup</Text>
+              </TouchableOpacity>
             </View>
 
             <TouchableOpacity

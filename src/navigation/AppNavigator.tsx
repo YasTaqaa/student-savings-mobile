@@ -1,3 +1,4 @@
+// src/navigation/AppNavigator.tsx
 import React from 'react';
 import { Text, Platform } from 'react-native';
 import { NavigationContainer } from '@react-navigation/native';
@@ -6,7 +7,6 @@ import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { RootStackParamList, MainTabParamList, StudentStackParamList } from '../types';
 import useStore from '../store/useStore';
-
 import LoginScreen from '../screens/LoginScreen';
 import ClassSelectionScreen from '../screens/ClassSelectionScreen';
 import StudentListScreen from '../screens/StudentListScreen';
@@ -23,34 +23,23 @@ function StudentNavigator() {
     <StudentStack.Navigator
       screenOptions={{
         headerTintColor: '#007AFF',
-        headerTitleStyle: {
-          fontWeight: '600',
-        },
+        headerTitleStyle: { fontWeight: '600' },
       }}
     >
-      <StudentStack.Screen 
-        name="ClassSelection" 
+      <StudentStack.Screen
+        name="ClassSelection"
         component={ClassSelectionScreen}
-        options={{ 
-          title: 'Pilih Kelas',
-          headerShown: true,
-        }}
+        options={{ title: 'Pilih Kelas', headerShown: true }}
       />
-      <StudentStack.Screen 
-        name="StudentList" 
+      <StudentStack.Screen
+        name="StudentList"
         component={StudentListScreen}
-        options={{ 
-          title: 'Daftar Siswa',
-          headerShown: true,
-        }}
+        options={{ title: 'Daftar Siswa', headerShown: true }}
       />
-      <StudentStack.Screen 
-        name="EditStudent" 
+      <StudentStack.Screen
+        name="EditStudent"
         component={EditStudentScreen}
-        options={{ 
-          title: 'Edit Data Siswa',
-          headerShown: true,
-        }}
+        options={{ title: 'Edit Data Siswa', headerShown: true }}
       />
     </StudentStack.Navigator>
   );
@@ -58,7 +47,7 @@ function StudentNavigator() {
 
 function MainNavigator() {
   const insets = useSafeAreaInsets();
-  
+
   return (
     <MainTab.Navigator
       screenOptions={{
@@ -77,47 +66,38 @@ function MainNavigator() {
           fontWeight: '600',
           marginBottom: 4,
         },
-        tabBarIconStyle: {
-          marginTop: 4,
-        },
+        tabBarIconStyle: { marginTop: 4 },
+        headerTitleStyle: { fontWeight: '600' },
       }}
     >
-      <MainTab.Screen 
-        name="StudentHome" 
+      <MainTab.Screen
+        name="StudentHome"
         component={StudentNavigator}
-        options={{ 
+        options={{
           title: 'Siswa',
           headerShown: false,
           tabBarIcon: ({ color }) => (
-            <Text style={{ fontSize: 24 }}>👨‍🎓</Text>
+            <Text style={{ color, fontSize: 24 }}>👨🎓</Text>
           ),
         }}
       />
-      <MainTab.Screen 
-        name="Reports" 
+      <MainTab.Screen
+        name="Reports"
         component={ReportScreen}
-        options={{ 
+        options={{
           title: 'Laporan',
-          headerShown: true,
-          headerTitleStyle: {
-            fontWeight: '600',
-          },
           tabBarIcon: ({ color }) => (
-            <Text style={{ fontSize: 24 }}>📊</Text>
+            <Text style={{ color, fontSize: 24 }}>📊</Text>
           ),
         }}
       />
-      <MainTab.Screen 
-        name="Profile" 
+      <MainTab.Screen
+        name="Profile"
         component={ProfileScreen}
-        options={{ 
+        options={{
           title: 'Akun',
-          headerShown: true,
-          headerTitleStyle: {
-            fontWeight: '600',
-          },
           tabBarIcon: ({ color }) => (
-            <Text style={{ fontSize: 24 }}>👤</Text>
+            <Text style={{ color, fontSize: 24 }}>⚙️</Text>
           ),
         }}
       />
@@ -127,7 +107,7 @@ function MainNavigator() {
 
 export default function AppNavigator() {
   const isAuthenticated = useStore((state) => state.isAuthenticated);
-  
+
   return (
     <NavigationContainer>
       <RootStack.Navigator screenOptions={{ headerShown: false }}>

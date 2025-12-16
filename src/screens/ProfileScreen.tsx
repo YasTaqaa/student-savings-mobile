@@ -142,36 +142,6 @@ export default function ProfileScreen() {
           </View>
         </View>
 
-        {/* Info Section */}
-        <View style={[common.bgWhite, common.roundedLg, common.p4, { marginBottom: 20 }]}>
-          <Text style={[common.textBase, common.fontSemibold, common.textBlack, common.mb4]}>
-            ℹ️ Informasi Aplikasi
-          </Text>
-          
-          <View style={[
-            common.flexRow,
-            common.justifyBetween,
-            { paddingVertical: 12, borderBottomWidth: 1, borderBottomColor: colors.gray[50] }
-          ]}>
-            <Text style={[common.textSm, common.textGray500]}>Versi Aplikasi</Text>
-            <Text style={[common.textSm, common.fontSemibold, common.textBlack]}>1.0.0</Text>
-          </View>
-          
-          <View style={[
-            common.flexRow,
-            common.justifyBetween,
-            { paddingVertical: 12, borderBottomWidth: 1, borderBottomColor: colors.gray[50] }
-          ]}>
-            <Text style={[common.textSm, common.textGray500]}>Platform</Text>
-            <Text style={[common.textSm, common.fontSemibold, common.textBlack]}>Expo React Native</Text>
-          </View>
-          
-          <View style={[common.flexRow, common.justifyBetween, { paddingVertical: 12 }]}>
-            <Text style={[common.textSm, common.textGray500]}>Database</Text>
-            <Text style={[common.textSm, common.fontSemibold, common.textBlack]}>AsyncStorage (Local)</Text>
-          </View>
-        </View>
-
         {/* Logout Button */}
         <TouchableOpacity 
           style={[

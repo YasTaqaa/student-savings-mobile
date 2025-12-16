@@ -1,4 +1,4 @@
-import { Alert, Share } from 'react-native';
+import { Share } from 'react-native';
 import { printToFileAsync } from 'expo-print';
 import * as FileSystem from 'expo-file-system/legacy';
 
@@ -11,7 +11,6 @@ export interface ClassReport {
   className?: string;
 }
 
-// tipe minimal student & transaction
 export interface Student {
   id: string;
   name: string;
@@ -29,17 +28,35 @@ export interface Transaction {
 const formatCurrency = (amount: number) =>
   `Rp ${amount.toLocaleString('id-ID')}`;
 
-const buildStudentDetailsText = (
+// =====================
+// Helper: HTML untuk PDF
+// =====================
+
+const buildStudentDetailsHTML = (
   grade: number,
   students: Student[],
   transactions: Transaction[]
-) => {
+): string => {
   const gradeStudents = students.filter((s) => s.grade === grade);
+
   if (gradeStudents.length === 0) {
-    return '\nTidak ada siswa untuk kelas ini.\n';
+    return '<p>Tidak ada siswa untuk kelas ini.</p>';
   }
 
-  let text = '\nRincian per siswa:\n';
+  let html = `
+    <h3>Detail Siswa Kelas ${grade}</h3>
+    <table style="width: 100%; border-collapse: collapse; margin-top: 20px;">
+      <thead>
+        <tr style="background-color: #f0f0f0;">
+          <th style="border: 1px solid #ddd; padding: 8px; text-align: left;">No.</th>
+          <th style="border: 1px solid #ddd; padding: 8px; text-align: left;">Nama Siswa</th>
+          <th style="border: 1px solid #ddd; padding: 8px; text-align: right;">Saldo</th>
+          <th style="border: 1px solid #ddd; padding: 8px; text-align: right;">Setoran</th>
+          <th style="border: 1px solid #ddd; padding: 8px; text-align: right;">Penarikan</th>
+        </tr>
+      </thead>
+      <tbody>
+  `;
 
   gradeStudents.forEach((student, index) => {
     const studentTransactions = transactions.filter(
@@ -52,158 +69,222 @@ const buildStudentDetailsText = (
       .filter((t) => t.type === 'withdrawal')
       .reduce((sum, t) => sum + t.amount, 0);
 
-    text += `
-${index + 1}. ${student.name}
-Saldo     : ${formatCurrency(student.balance)}
-Setoran   : ${formatCurrency(totalSetoran)}
-Penarikan : ${formatCurrency(totalPenarikan)}
-`;
+    html += `
+      <tr>
+        <td style="border: 1px solid #ddd; padding: 8px; text-align: left;">${index + 1}</td>
+        <td style="border: 1px solid #ddd; padding: 8px; text-align: left;">${student.name}</td>
+        <td style="border: 1px solid #ddd; padding: 8px; text-align: right;">${formatCurrency(
+          student.balance
+        )}</td>
+        <td style="border: 1px solid #ddd; padding: 8px; text-align: right;">${formatCurrency(
+          totalSetoran
+        )}</td>
+        <td style="border: 1px solid #ddd; padding: 8px; text-align: right;">${formatCurrency(
+          totalPenarikan
+        )}</td>
+      </tr>
+    `;
   });
 
-  return text;
+  html += `
+      </tbody>
+    </table>
+  `;
+
+  return html;
 };
 
 const buildPDFHTML = (
   classReport: ClassReport,
   students: Student[],
   transactions: Transaction[],
-  schoolName = 'Sistem Tabungan Siswa'
-) => {
-  const studentDetails = buildStudentDetailsText(
-    classReport.grade,
-    students,
-    transactions
-  ).replace(/\n/g, '<br />');
-
-  return `
-<!DOCTYPE html>
-<html>
-  <head>
-    <meta charset="utf-8" />
-    <style>
-      body { font-family: Arial, sans-serif; padding: 20px; line-height: 1.6; }
-      h1 { text-align: center; color: #333; margin-bottom: 10px; }
-      .subtitle { text-align: center; color: #666; margin-bottom: 20px; font-size: 14px; }
-      .summary { margin: 20px 0; padding: 15px; background-color: #f9f9f9; border: 1px solid #ddd; border-radius: 5px; }
-      .summary-row { display: flex; justify-content: space-between; margin: 10px 0; }
-      .summary-label { font-weight: bold; color: #333; }
-      .summary-value { text-align: right; }
-      .footer { margin-top: 30px; text-align: right; font-size: 12px; color: #666; }
-      pre { white-space: pre-wrap; font-family: inherit; }
-    </style>
-  </head>
-  <body>
-    <h1>📊 LAPORAN TABUNGAN SISWA</h1>
-    <div class="subtitle">${schoolName}</div>
-    <div class="subtitle">Kelas ${classReport.grade}</div>
-
-    <div class="summary">
-      <div class="summary-row">
-        <span class="summary-label">Total Siswa:</span>
-        <span class="summary-value">${classReport.totalStudents} siswa</span>
-      </div>
-      <div class="summary-row">
-        <span class="summary-label">Saldo Saat Ini:</span>
-        <span class="summary-value">${formatCurrency(classReport.totalBalance)}</span>
-      </div>
-      <div class="summary-row">
-        <span class="summary-label">Total Setoran:</span>
-        <span class="summary-value">${formatCurrency(classReport.totalDeposits)}</span>
-      </div>
-      <div class="summary-row">
-        <span class="summary-label">Total Penarikan:</span>
-        <span class="summary-value">${formatCurrency(classReport.totalWithdrawals)}</span>
-      </div>
-    </div>
-
-    <h2 style="margin-top: 30px; color: #333;">Rincian Per Siswa</h2>
-    <pre>${studentDetails}</pre>
-
-    <div class="footer">
-      <p>Dibuat: ${new Date().toLocaleString('id-ID')}</p>
-    </div>
-  </body>
-</html>
-`;
-};
-
-// EXPORT: pakai expo-print → PDF file per kelas
-export const generateClassReportPDF = async (
-  classReport: ClassReport,
-  students: Student[],
-  transactions: Transaction[],
-  schoolName = 'Sistem Tabungan Siswa'
-): Promise<string> => {
-  try {
-    const htmlContent = buildPDFHTML(
-      classReport,
-      students,
-      transactions,
-      schoolName
-    );
-
-    const { uri } = await printToFileAsync({
-      html: htmlContent,
-      base64: false,
-    });
-
-    const fileName = `laporan_kelas_${classReport.grade}_${new Date().getTime()}.pdf`;
-    const newUri = `${FileSystem.documentDirectory}${fileName}`;
-
-    await FileSystem.copyAsync({
-      from: uri,
-      to: newUri,
-    });
-
-    Alert.alert(
-      'Sukses',
-      `Laporan Kelas ${classReport.grade} telah dibuat.\n\nFile tersimpan di perangkat Anda: ${fileName}`,
-      [{ text: 'Tutup', style: 'default' }],
-    );
-
-    return newUri;
-  } catch (error) {
-    Alert.alert('Error', 'Gagal membuat laporan PDF');
-    console.error('Error generating PDF:', error);
-    throw error;
-  }
-};
-
-// BAGIKAN: pakai logika lama (Share.share teks)
-export const shareClassReportPDF = async (
-  classReport: ClassReport,
-  students: Student[],
-  transactions: Transaction[],
-  schoolName = 'Sistem Tabungan Siswa'
-) => {
-  const baseText = `
-Laporan Tabungan Siswa - ${schoolName}
-Kelas ${classReport.grade}
-
-RINGKASAN KELAS
-Total Siswa    : ${classReport.totalStudents} siswa
-Saldo Saat Ini : ${formatCurrency(classReport.totalBalance)}
-Total Setoran  : ${formatCurrency(classReport.totalDeposits)}
-Total Penarikan: ${formatCurrency(classReport.totalWithdrawals)}
-`.trim();
-
-  const studentText = buildStudentDetailsText(
+  schoolName = 'SD Negeri 3 Linggasari'
+): string => {
+  const studentDetailsHTML = buildStudentDetailsHTML(
     classReport.grade,
     students,
     transactions
   );
 
-  const fullText = `${baseText}\n${studentText}\nDibuat: ${new Date().toLocaleString(
-    'id-ID'
-  )}`;
+  return `
+    <html>
+      <head>
+        <meta charset="UTF-8" />
+        <title>Laporan Tabungan Siswa</title>
+        <style>
+          body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+            color: #333;
+          }
+          h1 {
+            text-align: center;
+            color: #2c5282;
+            margin-bottom: 5px;
+          }
+          h2 {
+            color: #2d5016;
+            border-bottom: 2px solid #2d5016;
+            padding-bottom: 10px;
+            margin-top: 20px;
+          }
+          .summary-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+            margin: 20px 0;
+          }
+          .summary-card {
+            border: 1px solid #ddd;
+            padding: 15px;
+            border-radius: 5px;
+            background-color: #f9f9f9;
+          }
+          .summary-card-label {
+            font-size: 12px;
+            color: #666;
+            margin-bottom: 5px;
+          }
+          .summary-card-value {
+            font-size: 16px;
+            font-weight: bold;
+            color: #2c5282;
+          }
+          table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 15px;
+          }
+          th, td {
+            border: 1px solid #ddd;
+            padding: 8px;
+            text-align: left;
+          }
+          th {
+            background-color: #2d5016;
+            color: white;
+            font-weight: bold;
+          }
+          tr:nth-child(even) {
+            background-color: #f9f9f9;
+          }
+          .footer {
+            margin-top: 30px;
+            font-size: 11px;
+            color: #999;
+            text-align: center;
+          }
+        </style>
+      </head>
+      <body>
+        <h1>Laporan Tabungan Siswa - ${schoolName}</h1>
+        <h2>Kelas ${classReport.grade}</h2>
 
+        <h3>Ringkasan Kelas</h3>
+        <div class="summary-grid">
+          <div class="summary-card">
+            <div class="summary-card-label">Total Siswa</div>
+            <div class="summary-card-value">${classReport.totalStudents} siswa</div>
+          </div>
+          <div class="summary-card">
+            <div class="summary-card-label">Total Saldo</div>
+            <div class="summary-card-value">${formatCurrency(
+              classReport.totalBalance
+            )}</div>
+          </div>
+          <div class="summary-card">
+            <div class="summary-card-label">Total Setoran</div>
+            <div class="summary-card-value">${formatCurrency(
+              classReport.totalDeposits
+            )}</div>
+          </div>
+          <div class="summary-card">
+            <div class="summary-card-label">Total Penarikan</div>
+            <div class="summary-card-value">${formatCurrency(
+              classReport.totalWithdrawals
+            )}</div>
+          </div>
+        </div>
+
+        ${studentDetailsHTML}
+
+        <div class="footer">
+          <p>Dibuat: ${new Date().toLocaleString('id-ID')}</p>
+        </div>
+      </body>
+    </html>
+  `;
+};
+
+
+const ensureDownloadsDir = async (): Promise<string | null> => {
   try {
-    await Share.share({
-      message: fullText,
-      title: `Laporan Kelas ${classReport.grade}`,
-    });
-  } catch (error) {
-    Alert.alert('Error', 'Gagal berbagi laporan');
-    console.error(error);
+    const permissions =
+      await FileSystem.StorageAccessFramework.requestDirectoryPermissionsAsync();
+
+    if (!permissions.granted) {
+      return null;
+    }
+
+    return permissions.directoryUri;
+  } catch (e) {
+    console.error('Error ensureDownloadsDir:', e);
+    return null;
   }
+};
+
+
+export const generateClassReportPDF = async (
+  classReport: ClassReport,
+  students: Student[],
+  transactions: Transaction[],
+  schoolName = 'SD Negeri 3 Linggasari'
+): Promise<string | null> => {
+  try {
+    const html = buildPDFHTML(classReport, students, transactions, schoolName);
+
+    // buat PDF sementara
+    const { uri } = await printToFileAsync({
+      html,
+      base64: false,
+    });
+
+    const dirUri = await ensureDownloadsDir();
+    if (!dirUri) return null;
+
+    const fileName = `Laporan_Kelas_${classReport.grade}.pdf`;
+
+    const pdfData = await FileSystem.readAsStringAsync(uri, {
+      encoding: FileSystem.EncodingType.Base64,
+    });
+
+    const fileUri = await FileSystem.StorageAccessFramework.createFileAsync(
+      dirUri,
+      fileName,
+      'application/pdf'
+    );
+
+    await FileSystem.writeAsStringAsync(fileUri, pdfData, {
+      encoding: FileSystem.EncodingType.Base64,
+    });
+
+    // tidak Alert di sini, biar di-handle di screen
+    return fileUri;
+  } catch (error) {
+    console.error('Error generateClassReportPDF:', error);
+    throw error;
+  }
+};
+
+
+export const shareExistingPDF = async (
+  fileUri: string,
+  title: string,
+  message?: string
+): Promise<void> => {
+  await Share.share({
+    url: fileUri,
+    title,
+    message,
+  });
 };

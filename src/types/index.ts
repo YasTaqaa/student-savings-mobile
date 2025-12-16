@@ -34,6 +34,7 @@ export interface Transaction {
   date: string;
   description: string;
   createdBy: string;
+  note?: string; // supaya addTransaction pakai note tidak error
 }
 
 // =====================
