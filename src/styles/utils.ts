@@ -19,6 +19,19 @@ export const colors = {
 };
 
 export const common = StyleSheet.create({
+  modal: {
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.5)',
+    justifyContent: 'center',
+    padding: 20,
+  },
+  modalContent: {
+    backgroundColor: colors.white,
+    borderRadius: 20,
+    padding: 20,
+    maxHeight: '90%' as any,
+  },
+
   title: {
   color: colors.gray[600],
   fontSize: 20,
