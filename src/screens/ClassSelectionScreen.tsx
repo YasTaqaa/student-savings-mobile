@@ -19,59 +19,34 @@ export default function ClassSelectionScreen({ navigation }: Props) {
   const user = useStore((state) => state.user);
   const students = useStore((state) => state.students);
 
-  const getStudentCount = (grade: number, className?: string) => {
-    return students.filter((s: any) => {
-      if (grade === 0) return true;
-      if (className) {
-        return s.grade === grade && s.class === className;
-      }
-      return s.grade === grade;
-    }).length;
-  };
+  const getStudentCount = (grade: string, className?: string) => {
+  return students.filter((s) => {
+    if (grade === '0') return true;                
+    if (className) {
+      return s.grade === grade && s.class === className;
+    }
+    return s.grade === grade;
+  }).length;
+};
 
   const getTotalStudents = () => students.length;
 
-  const handleSelectClass = (grade: number, className?: string) => {
-    navigation.navigate('StudentList', { grade, className });
-  };
+const handleSelectClass = (grade: string, className?: string) => {
+  navigation.navigate('StudentList', { grade, className });
+};
 
   const classes = [
-    { grade: 0, label: 'Semua Kelas', icon: '📚', color: colors.primary },
-    { grade: 1, label: 'Kelas 1', icon: '1️⃣', color: '#FF6B6B' },
-    { grade: 2, label: 'Kelas 2', icon: '2️⃣', color: '#4ECDC4' },
-    { grade: 3, label: 'Kelas 3', icon: '3️⃣', color: '#FFD93D' },
-    {
-      grade: 4,
-      label: 'Kelas 4A',
-      icon: '4️⃣',
-      color: '#95E1D3',
-      className: '4A',
-    },
-    {
-      grade: 4,
-      label: 'Kelas 4B',
-      icon: '4️⃣',
-      color: '#95E1D3',
-      className: '4B',
-    },
-    { grade: 5, label: 'Kelas 5', icon: '5️⃣', color: '#F38181' },
-    {
-      grade: 6,
-      label: 'Kelas 6A',
-      icon: '6️⃣',
-      color: '#AA96DA',
-      className: '6A',
-    },
-    {
-      grade: 6,
-      label: 'Kelas 6B',
-      icon: '6️⃣',
-      color: '#AA96DA',
-      className: '6B',
-    },
-  ] as const;
+  { grade: '0', label: 'Semua Kelas', icon: '📚', color: colors.primary },
+  { grade: '1', label: 'Kelas 1', icon: '1️⃣', color: '#FF6B6B' },
+  { grade: '2', label: 'Kelas 2', icon: '2️⃣', color: '#4ECDC4' },
+  { grade: '3', label: 'Kelas 3', icon: '3️⃣', color: '#FFD93D' },
+  { grade: '4', label: 'Kelas 4A', icon: '4️⃣', color: '#95E1D3', className: '4A' },
+  { grade: '4', label: 'Kelas 4B', icon: '4️⃣', color: '#95E1D3', className: '4B' },
+  { grade: '5', label: 'Kelas 5', icon: '5️⃣', color: '#F38181' },
+  { grade: '6', label: 'Kelas 6A', icon: '6️⃣', color: '#AA96DA', className: '6A' },
+  { grade: '6', label: 'Kelas 6B', icon: '6️⃣', color: '#AA96DA', className: '6B' },
+] as const;
 
-  // ====== Animasi header + list ======
   const headerOpacity = useRef(new Animated.Value(0)).current;
   const headerTranslateY = useRef(new Animated.Value(20)).current;
 
@@ -155,12 +130,12 @@ export default function ClassSelectionScreen({ navigation }: Props) {
         <Text style={[common.subtitle, common.mb2]}>📖 Pilih Kelas</Text>
 
         {classes.map((cls, index) => {
-          const studentCount =
-            cls.grade === 0
-              ? getTotalStudents()
-              : getStudentCount(cls.grade, (cls as any).className);
+        const gradeStr = String(cls.grade);
 
-          // animasi per tombol kelas
+      const studentCount =
+        cls.grade === '0'
+          ? getTotalStudents()
+          : getStudentCount(gradeStr, (cls as any).className);
           const itemOpacity = useRef(new Animated.Value(0)).current;
           const itemTranslate = useRef(new Animated.Value(10)).current;
 
@@ -191,8 +166,7 @@ export default function ClassSelectionScreen({ navigation }: Props) {
             >
               <TouchableOpacity
                 onPress={() =>
-                  handleSelectClass(cls.grade, (cls as any).className)
-                }
+                  handleSelectClass(gradeStr, (cls as any).className)}
                 activeOpacity={0.7}
                 style={[
                   common.mt2,

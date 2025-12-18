@@ -60,10 +60,10 @@ export default function EditStudentScreen({ route, navigation }: Props) {
       await updateStudent(student.id, {
         nis: nis.trim(),
         name: name.trim(),
-        grade,
+        grade: grade.toString(),
         class: studentClass,
       });
-      navigation.navigate('StudentList', { grade });
+      navigation.navigate('StudentList', { grade: grade.toString() });
     } catch (error) {
       console.error(error);
       Alert.alert('Error', 'Gagal menyimpan data siswa');
@@ -184,7 +184,7 @@ export default function EditStudentScreen({ route, navigation }: Props) {
           setStudentClass(cls);
           setGrade(Number(cls));
         }}
-        preselectedGrade={grade}
+        preselectedGrade={grade.toString()}
         disabled={!isAdmin}
       />
 

@@ -26,29 +26,23 @@ export interface Transaction {
   note?: string; 
 }
 export interface ClassReport {
-  className: string; // contoh: "4A"
+  className: string; 
   totalStudents: number;
   totalBalance: number;
   totalDeposits: number;
   totalWithdrawals: number;
 }
 
-// =====================
-// STUDENT SECTION (LIST)
-// =====================
 export interface StudentSection {
-  title: string;      // contoh: "Kelas 4A"
-  grade: string;      // contoh: "4A"
+  title: string;     
+  grade: string;     
   data: Student[];
 }
 
-// =====================
-// CLASS GROUP
-// =====================
 export interface ClassGroup {
-  grade: string;      // contoh: "4"
-  title: string;      // contoh: "Kelas 4"
-  classes: string[];  // ["4A", "4B"]
+  grade: string;      
+  title: string;     
+  classes: string[]; 
   totalStudents: number;
   totalBalance: number;
 }
@@ -66,7 +60,7 @@ export type MainTabParamList = {
 
 export type StudentStackParamList = {
   ClassSelection: undefined;
-  StudentList: { grade: number };
+  StudentList: { grade: string; className?: string };
   StudentDetail: { studentId: string };
   Transaction: { studentId: string };
   EditStudent: { studentId: string };

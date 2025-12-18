@@ -6,7 +6,7 @@ interface ClassPickerProps {
   label?: string;
   selectedClass: string;
   onSelectClass: (className: string) => void;
-  preselectedGrade?: number;
+  preselectedGrade?: string;
   disabled?: boolean;
 }
 

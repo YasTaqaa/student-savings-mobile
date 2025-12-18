@@ -32,16 +32,16 @@ export default function StudentListScreen({ navigation, route }: Props) {
     nis: '',
     name: '',
     class:
-      grade === 0
+      grade === '0'
         ? selectedClassName ?? ''
         : selectedClassName ?? `${grade}`,
   });
 
   const students = useMemo(() => {
-    if (grade === 0 && !selectedClassName) return allStudents;
+    if (grade === '0' && !selectedClassName) return allStudents;
 
     return allStudents.filter((s) => {
-      if (grade === 0) {
+      if (grade === '0') {
         return selectedClassName ? s.class === selectedClassName : true;
       }
       if (selectedClassName) {
@@ -110,7 +110,7 @@ export default function StudentListScreen({ navigation, route }: Props) {
         nis: '',
         name: '',
         class:
-          grade === 0
+          grade === '0'
             ? selectedClassName ?? ''
             : selectedClassName ?? `${grade}`,
       });
@@ -195,7 +195,7 @@ export default function StudentListScreen({ navigation, route }: Props) {
       nis: '',
       name: '',
       class:
-        grade === 0
+        grade === '0'
           ? selectedClassName ?? ''
           : selectedClassName ?? `${grade}`,
     });
@@ -207,7 +207,7 @@ export default function StudentListScreen({ navigation, route }: Props) {
       <View style={{ padding: 16 }}>
         {/* Header */}
         <Text style={[common.title, common.mb1]}>
-          {grade === 0
+          {grade === '0'
             ? 'Semua Siswa'
             : selectedClassName
             ? `Siswa Kelas ${selectedClassName}`
@@ -345,7 +345,7 @@ export default function StudentListScreen({ navigation, route }: Props) {
         >
           <Text style={common.text2xl}>👨🎓</Text>
           <Text style={[common.mt2, common.fontSemibold]}>
-            {grade === 0
+            {grade === '0'
               ? 'Belum ada data siswa'
               : selectedClassName
               ? `Belum ada siswa di Kelas ${selectedClassName}`
@@ -419,7 +419,7 @@ export default function StudentListScreen({ navigation, route }: Props) {
               onSelectClass={(className) =>
                 setNewStudent({ ...newStudent, class: className })
               }
-              preselectedGrade={grade === 0 ? undefined : grade}
+              preselectedGrade={grade === '0' ? undefined : grade}
             />
 
             <View
@@ -436,7 +436,7 @@ export default function StudentListScreen({ navigation, route }: Props) {
                     nis: '',
                     name: '',
                     class:
-                      grade === 0
+                      grade === '0'
                         ? selectedClassName ?? ''
                         : selectedClassName ?? `${grade}`,
                   });
