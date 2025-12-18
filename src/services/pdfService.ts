@@ -1,4 +1,3 @@
-import { Share } from 'react-native';
 import { printToFileAsync } from 'expo-print';
 import * as FileSystem from 'expo-file-system/legacy';
 
@@ -15,6 +14,7 @@ export interface Student {
   id: string;
   name: string;
   grade: number;
+  class: string;
   balance: number;
 }
 
@@ -27,10 +27,6 @@ export interface Transaction {
 
 const formatCurrency = (amount: number) =>
   `Rp ${amount.toLocaleString('id-ID')}`;
-
-// =====================
-// Helper: HTML untuk PDF
-// =====================
 
 const buildStudentDetailsHTML = (
   grade: number,
@@ -243,7 +239,6 @@ export const generateClassReportPDF = async (
   try {
     const html = buildPDFHTML(classReport, students, transactions, schoolName);
 
-    // buat PDF sementara
     const { uri } = await printToFileAsync({
       html,
       base64: false,
@@ -268,23 +263,9 @@ export const generateClassReportPDF = async (
       encoding: FileSystem.EncodingType.Base64,
     });
 
-    // tidak Alert di sini, biar di-handle di screen
     return fileUri;
   } catch (error) {
     console.error('Error generateClassReportPDF:', error);
     throw error;
   }
-};
-
-
-export const shareExistingPDF = async (
-  fileUri: string,
-  title: string,
-  message?: string
-): Promise<void> => {
-  await Share.share({
-    url: fileUri,
-    title,
-    message,
-  });
 };

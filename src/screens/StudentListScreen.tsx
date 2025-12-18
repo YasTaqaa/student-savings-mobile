@@ -1,15 +1,5 @@
-// src/screens/StudentListScreen.tsx
 import React, { useState, useMemo } from 'react';
-import {
-  View,
-  Text,
-  FlatList,
-  TouchableOpacity,
-  Alert,
-  Modal,
-  TextInput,
-  Platform,
-} from 'react-native';
+import {View,Text,Animated,TouchableOpacity,Alert,Modal,TextInput,Platform,} from 'react-native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { RouteProp } from '@react-navigation/native';
 import { StudentStackParamList, getGradeFromClass } from '../types';
@@ -17,7 +7,10 @@ import useStore from '../store/useStore';
 import ClassPicker from '../components/ClassPicker';
 import { common, container, button, input, colors } from '../styles/utils';
 
-type NavigationProp = NativeStackNavigationProp<StudentStackParamList, 'StudentList'>;
+type NavigationProp = NativeStackNavigationProp<
+  StudentStackParamList,
+  'StudentList'
+>;
 type RouteProps = RouteProp<StudentStackParamList, 'StudentList'>;
 
 interface Props {
@@ -26,29 +19,41 @@ interface Props {
 }
 
 export default function StudentListScreen({ navigation, route }: Props) {
-  const { grade } = route.params;
+  const { grade, className: selectedClassName } = route.params;
 
   const allStudents = useStore((state) => state.students);
   const addStudent = useStore((state) => state.addStudent);
   const deleteStudent = useStore((state) => state.deleteStudent);
   const currentUser = useStore((state) => state.user);
-
   const isAdmin = currentUser?.role === 'admin';
 
   const [modalVisible, setModalVisible] = useState(false);
   const [newStudent, setNewStudent] = useState({
     nis: '',
     name: '',
-    class: grade === 0 ? '' : `${grade}`,
+    class:
+      grade === 0
+        ? selectedClassName ?? ''
+        : selectedClassName ?? `${grade}`,
   });
 
   const students = useMemo(() => {
-    if (grade === 0) return allStudents;
-    return allStudents.filter((s) => s.grade === grade);
-  }, [allStudents, grade]);
+    if (grade === 0 && !selectedClassName) return allStudents;
+
+    return allStudents.filter((s) => {
+      if (grade === 0) {
+        return selectedClassName ? s.class === selectedClassName : true;
+      }
+      if (selectedClassName) {
+        return s.grade === grade && s.class === selectedClassName;
+      }
+      return s.grade === grade;
+    });
+  }, [allStudents, grade, selectedClassName]);
 
   const groupedStudents = useMemo(() => {
-    const grouped = new Map<string, typeof students>();
+    const grouped = new Map<string, any[]>();
+
     students.forEach((student) => {
       if (!grouped.has(student.class)) {
         grouped.set(student.class, []);
@@ -60,7 +65,9 @@ export default function StudentListScreen({ navigation, route }: Props) {
       studentList.sort((a, b) => a.name.localeCompare(b.name));
     });
 
-    return Array.from(grouped.entries()).sort((a, b) => a[0].localeCompare(b[0]));
+    return Array.from(grouped.entries()).sort((a, b) =>
+      a[0].localeCompare(b[0]),
+    );
   }, [students]);
 
   const handleAddStudent = async () => {
@@ -78,7 +85,9 @@ export default function StudentListScreen({ navigation, route }: Props) {
       return;
     }
 
-    const isDuplicate = allStudents.some((s) => s.nis === newStudent.nis.trim());
+    const isDuplicate = allStudents.some(
+      (s) => s.nis === newStudent.nis.trim(),
+    );
     if (isDuplicate) {
       const msg = `NIS ${newStudent.nis} sudah terdaftar`;
       if (Platform.OS === 'web') window.alert(`Error: ${msg}`);
@@ -87,6 +96,7 @@ export default function StudentListScreen({ navigation, route }: Props) {
     }
 
     const studentGrade = getGradeFromClass(newStudent.class);
+
     try {
       await addStudent({
         ...newStudent,
@@ -99,7 +109,10 @@ export default function StudentListScreen({ navigation, route }: Props) {
       setNewStudent({
         nis: '',
         name: '',
-        class: grade === 0 ? '' : `${grade}`,
+        class:
+          grade === 0
+            ? selectedClassName ?? ''
+            : selectedClassName ?? `${grade}`,
       });
       setModalVisible(false);
 
@@ -155,133 +168,150 @@ export default function StudentListScreen({ navigation, route }: Props) {
         message,
         [
           { text: 'Batal', style: 'cancel' },
-          { text: 'Hapus', style: 'destructive', onPress: () => handleDelete(student.id) },
+          {
+            text: 'Hapus',
+            style: 'destructive',
+            onPress: () => handleDelete(student.id),
+          },
         ],
         { cancelable: true },
       );
     }
   };
 
-  const formatCurrency = (amount: number) => `Rp ${amount.toLocaleString('id-ID')}`;
+  const formatCurrency = (amount: number) =>
+    `Rp ${amount.toLocaleString('id-ID')}`;
 
-  const getTotalBalance = () => students.reduce((sum, s) => sum + s.balance, 0);
+  const getTotalBalance = () =>
+    students.reduce((sum, s) => sum + s.balance, 0);
 
   const openAddModal = () => {
     if (!isAdmin) {
       Alert.alert('Akses Ditolak', 'Hanya admin yang dapat menambah siswa');
       return;
     }
+
     setNewStudent({
       nis: '',
       name: '',
-      class: grade === 0 ? '' : `${grade}`,
+      class:
+        grade === 0
+          ? selectedClassName ?? ''
+          : selectedClassName ?? `${grade}`,
     });
     setModalVisible(true);
   };
 
   return (
     <View style={container.screen}>
-      {/* Header */}
-      <View style={[common.bgWhite, common.p4, common.borderB, common.borderGray100]}>
-        <Text style={[common.textXl, common.fontBold, common.textBlack]}>
-          {grade === 0 ? 'Semua Siswa' : `Siswa Kelas ${grade}`}
+      <View style={{ padding: 16 }}>
+        {/* Header */}
+        <Text style={[common.title, common.mb1]}>
+          {grade === 0
+            ? 'Semua Siswa'
+            : selectedClassName
+            ? `Siswa Kelas ${selectedClassName}`
+            : `Siswa Kelas ${grade}`}
         </Text>
-        <View style={[common.flexRow, { gap: 16, marginTop: 8 }]}>
-          <Text style={[common.textSm, common.textGray500]}>{students.length} siswa</Text>
-          <Text style={[common.textSm, common.textGray500]}>
-            {formatCurrency(getTotalBalance())}
-          </Text>
-        </View>
-      </View>
-
-      {/* Hint */}
-      <View
-        style={{
-          backgroundColor: '#E8F4FD',
-          paddingVertical: 8,
-          paddingHorizontal: 16,
-          borderBottomWidth: 1,
-          borderBottomColor: colors.primary,
-        }}
-      >
-        <Text
-          style={[
-            common.textXs,
-            { color: colors.primary },
-            common.textCenter,
-            common.fontMedium,
-          ]}
-        >
-          💡 Tap nama untuk edit • Tap 🗑️ untuk hapus (Admin saja)
+        <Text style={common.caption}>
+          {students.length} siswa • Total saldo:{' '}
+          {formatCurrency(getTotalBalance())}
         </Text>
       </View>
 
       {/* Student List */}
       {groupedStudents.length > 0 ? (
-        <FlatList
+        <Animated.FlatList
           data={groupedStudents}
           keyExtractor={(item) => item[0]}
-          contentContainerStyle={{ paddingBottom: 100 }}
-          renderItem={({ item }) => {
+          contentContainerStyle={{ paddingHorizontal: 16, paddingBottom: 100 }}
+          renderItem={({ item, index }) => {
             const [className, classStudents] = item;
+
+            const rowOpacity = new Animated.Value(0);
+            const rowTranslate = new Animated.Value(10);
+
+            Animated.parallel([
+              Animated.timing(rowOpacity, {
+                toValue: 1,
+                duration: 300,
+                delay: index * 80,
+                useNativeDriver: true,
+              }),
+              Animated.timing(rowTranslate, {
+                toValue: 0,
+                duration: 300,
+                delay: index * 80,
+                useNativeDriver: true,
+              }),
+            ]).start();
+
             return (
-              <View style={{ marginTop: 16 }}>
+              <Animated.View
+                style={{
+                  opacity: rowOpacity,
+                  transform: [{ translateY: rowTranslate }],
+                  marginBottom: 12,
+                  borderRadius: 12,
+                  overflow: 'hidden',
+                  backgroundColor: colors.gray[50],
+                }}
+              >
+                {/* Header kelas */}
                 <View
                   style={[
                     common.flexRow,
                     common.justifyBetween,
-                    common.itemsCenter,
-                    { paddingHorizontal: 16, paddingVertical: 10, backgroundColor: colors.gray[100] },
+                    common.p3,
+                    common.bgWhite,
                   ]}
                 >
-                  <Text style={[common.textBase, common.fontBold, common.textBlack]}>
-                    📚 Kelas {className}
-                  </Text>
-                  <Text style={[common.textSm, common.fontSemibold, common.textGray500]}>
+                  <View style={common.flexRow}>
+                    <Text style={[common.mr2]}>📚</Text>
+                    <Text style={[common.fontSemibold]}>
+                      Kelas {className}
+                    </Text>
+                  </View>
+                  <Text style={common.caption}>
                     {classStudents.length} siswa
                   </Text>
                 </View>
 
-                <View style={{ paddingHorizontal: 16 }}>
-                  {classStudents.map((student) => (
+                {/* Daftar siswa: card per siswa */}
+                <View style={[common.bgGray50, common.p3]}>
+                  {classStudents.map((student: any) => (
                     <View
                       key={student.id}
                       style={[
-                        common.flexRow,
-                        common.itemsCenter,
                         common.bgWhite,
+                        common.roundedLg,
+                        common.p3,
+                        common.mb2,
+                        common.flexRow,
+                        common.justifyBetween,
+                        common.itemsCenter,
                         common.shadow,
-                        { marginTop: 12, borderRadius: 12, overflow: 'hidden' },
                       ]}
                     >
                       <TouchableOpacity
-                        style={[common.flex1, common.flexRow, common.itemsCenter, common.p4]}
-                        onPress={() =>
-                          navigation.navigate('EditStudent', { studentId: student.id })
-                        }
+                        style={{ flex: 1 }}
                         activeOpacity={0.7}
+                        onPress={() =>
+                          navigation.navigate('EditStudent', {
+                            studentId: student.id,
+                          })
+                        }
                       >
-                        <View style={[common.flex1]}>
-                          <Text
-                            style={[
-                              common.textLg,
-                              common.fontSemibold,
-                              common.textBlack,
-                              common.mb1,
-                            ]}
-                          >
-                            {student.name}
-                          </Text>
-                          <Text style={[common.textSm, common.textGray500]}>
-                            NIS: {student.nis}
-                          </Text>
-                        </View>
+                        <Text style={[common.fontSemibold]}>
+                          {student.name}
+                        </Text>
+                        <Text style={common.caption}>
+                          NIS: {student.nis}
+                        </Text>
                         <Text
                           style={[
-                            common.textLg,
-                            common.fontBold,
-                            common.textSuccess,
-                            { marginRight: 8 },
+                            common.textPrimary,
+                            common.mt1,
                           ]}
                         >
                           {formatCurrency(student.balance)}
@@ -290,104 +320,101 @@ export default function StudentListScreen({ navigation, route }: Props) {
 
                       {isAdmin && (
                         <TouchableOpacity
-                          style={{
-                            justifyContent: 'center',
-                            alignItems: 'center',
-                            width: 56,
-                            height: 56,
-                            borderLeftWidth: 1,
-                            borderLeftColor: colors.gray[100],
-                          }}
                           onPress={() => showDeleteConfirm(student)}
                           activeOpacity={0.7}
+                          style={{ paddingHorizontal: 8, paddingVertical: 4 }}
                         >
-                          <Text style={{ fontSize: 20 }}>🗑️</Text>
+                          <Text>🗑️</Text>
                         </TouchableOpacity>
                       )}
                     </View>
                   ))}
                 </View>
-              </View>
+              </Animated.View>
             );
           }}
         />
       ) : (
-        <View style={[common.itemsCenter, { marginTop: 100, paddingHorizontal: 40 }]}>
-          <Text style={{ fontSize: 64, marginBottom: 16 }}>👨🎓</Text>
-          <Text style={[common.textLg, common.fontBold, common.textBlack, common.mb2, common.textCenter]}>
-            {grade === 0 ? 'Belum ada data siswa' : `Belum ada siswa di Kelas ${grade}`}
-          </Text>
-          <Text style={[common.textSm, common.textGray500, common.textCenter]}>
-            Tap tombol + untuk menambah siswa baru (hanya admin)
+        <View
+          style={[
+            common.flex1,
+            common.itemsCenter,
+            common.justifyCenter,
+            common.p4,
+          ]}
+        >
+          <Text style={common.text2xl}>👨🎓</Text>
+          <Text style={[common.mt2, common.fontSemibold]}>
+            {grade === 0
+              ? 'Belum ada data siswa'
+              : selectedClassName
+              ? `Belum ada siswa di Kelas ${selectedClassName}`
+              : `Belum ada siswa di Kelas ${grade}`}
           </Text>
         </View>
       )}
 
-      {/* FAB Button (Admin only) */}
       {isAdmin && (
-        <TouchableOpacity
-          style={{
-            backgroundColor: colors.primary,
-            justifyContent: 'center',
-            alignItems: 'center',
-            position: 'absolute',
-            right: 20,
-            bottom: 20,
-            width: 60,
-            height: 60,
-            borderRadius: 30,
-            shadowColor: '#000',
-            shadowOffset: { width: 0, height: 4 },
-            shadowOpacity: 0.3,
-            shadowRadius: 6,
-            elevation: 8,
-          }}
-          onPress={openAddModal}
-          activeOpacity={0.8}
-        >
-          <Text style={{ color: 'white', fontSize: 32, fontWeight: '300' }}>+</Text>
-        </TouchableOpacity>
-      )}
+  <TouchableOpacity
+    onPress={openAddModal}
+    activeOpacity={0.8}
+    style={{
+      position: 'absolute',
+      right: 16,
+      bottom: 24,
+      width: 56,
+      height: 56,
+      borderRadius: 28,
+      backgroundColor: colors.primary ?? '#007bff',
+      alignItems: 'center',
+      justifyContent: 'center',
+      // sedikit shadow
+      shadowColor: '#000',
+      shadowOpacity: 0.2,
+      shadowRadius: 4,
+      shadowOffset: { width: 0, height: 2 },
+      elevation: 4,
+    }}
+  >
+    <Text style={{ color: 'white', fontSize: 28, marginTop: -2 }}>+</Text>
+  </TouchableOpacity>
+)}
+
 
       {/* Modal Add Student (Admin only) */}
       <Modal
         visible={modalVisible}
-        animationType="slide"
         transparent
+        animationType="fade"
         onRequestClose={() => setModalVisible(false)}
       >
         <View style={container.modal}>
           <View style={container.modalContent}>
-            <Text
-              style={[
-                common.textXl,
-                common.fontSemibold,
-                common.mb4,
-                common.textCenter,
-              ]}
-            >
+            <Text style={[common.subtitle, common.mb3]}>
               ➕ Tambah Siswa Baru
             </Text>
 
             <Text style={input.label}>NIS (Nomor Induk Siswa)</Text>
             <TextInput
               style={input.base}
-              placeholder="Masukkan NIS"
               value={newStudent.nis}
-              onChangeText={(text) => setNewStudent({ ...newStudent, nis: text })}
+              onChangeText={(text) =>
+                setNewStudent({ ...newStudent, nis: text })
+              }
               keyboardType="numeric"
             />
 
             <Text style={input.label}>Nama Lengkap</Text>
             <TextInput
               style={input.base}
-              placeholder="Masukkan nama lengkap"
               value={newStudent.name}
-              onChangeText={(text) => setNewStudent({ ...newStudent, name: text })}
+              onChangeText={(text) =>
+                setNewStudent({ ...newStudent, name: text })
+              }
             />
 
+            <Text style={input.label}>Kelas</Text>
             <ClassPicker
-              label="Kelas"
               selectedClass={newStudent.class}
               onSelectClass={(className) =>
                 setNewStudent({ ...newStudent, class: className })
@@ -395,23 +422,32 @@ export default function StudentListScreen({ navigation, route }: Props) {
               preselectedGrade={grade === 0 ? undefined : grade}
             />
 
-            <View style={[common.flexRow, { gap: 12, marginTop: 24 }]}>
+            <View
+              style={[
+                common.flexRow,
+                common.justifyBetween,
+                common.mt4,
+              ]}
+            >
               <TouchableOpacity
-                style={[button.secondary, common.flex1]}
+                style={[button.secondary, { flex: 1, marginRight: 8 }]}
                 onPress={() => {
                   setNewStudent({
                     nis: '',
                     name: '',
-                    class: grade === 0 ? '' : `${grade}`,
+                    class:
+                      grade === 0
+                        ? selectedClassName ?? ''
+                        : selectedClassName ?? `${grade}`,
                   });
                   setModalVisible(false);
                 }}
               >
-                <Text style={common.textBlack}>Batal</Text>
+                <Text style={button.text}>Batal</Text>
               </TouchableOpacity>
 
               <TouchableOpacity
-                style={[button.primary, common.flex1]}
+                style={[button.primary, { flex: 1, marginLeft: 8 }]}
                 onPress={handleAddStudent}
               >
                 <Text style={button.textWhite}>Simpan</Text>

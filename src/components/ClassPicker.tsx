@@ -1,4 +1,3 @@
-// src/components/ClassPicker.tsx
 import React, { useState } from 'react';
 import { View, Text, TouchableOpacity, Modal } from 'react-native';
 import { common, input, button, colors } from '../styles/utils';
@@ -20,103 +19,104 @@ export default function ClassPicker({
 }: ClassPickerProps) {
   const [modalVisible, setModalVisible] = useState(false);
 
-  const grades = [1, 2, 3, 4, 5, 6];
-  const availableGrades = preselectedGrade ? [preselectedGrade] : grades;
+  const allClasses = ['1', '2', '3', '4A', '4B', '5', '6A', '6B'];
 
-  const handleSelect = (grade: number) => {
+  const availableClasses = preselectedGrade
+    ? allClasses.filter((c) => c.startsWith(String(preselectedGrade)))
+    : allClasses;
+
+  const handleSelect = (kelas: string) => {
     if (disabled) return;
-    onSelectClass(`${grade}`);
+    onSelectClass(kelas);
     setModalVisible(false);
   };
 
-  const gradeEmojis = ['1️⃣', '2️⃣', '3️⃣', '4️⃣', '5️⃣', '6️⃣'];
+  const emojis: Record<string, string> = {
+    '1': '1️⃣',
+    '2': '2️⃣',
+    '3': '3️⃣',
+    '4A': '4️⃣',
+    '4B': '4️⃣',
+    '5': '5️⃣',
+    '6A': '6️⃣',
+    '6B': '6️⃣',
+  };
 
   return (
-    <View>
+    <View style={{ marginBottom: 12 }}>
       {label && (
-        <Text style={input.label}>
+        <Text style={[common.caption, common.mb1]}>
           {label}
         </Text>
       )}
 
-      {/* Tombol input utama */}
       <TouchableOpacity
         style={[
           input.base,
-          { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', opacity: disabled ? 0.6 : 1 },
+          common.flexRow,
+          common.itemsCenter,
+          common.justifyBetween,
+          disabled && { backgroundColor: colors.gray[200] },
         ]}
         onPress={() => !disabled && setModalVisible(true)}
         activeOpacity={disabled ? 1 : 0.7}
         disabled={disabled}
       >
-        <Text style={selectedClass ? common.textBlack : common.textGray500}>
+        <Text>
           {selectedClass ? `Kelas ${selectedClass}` : 'Pilih kelas'}
         </Text>
-        <Text style={common.textGray400}>▾</Text>
+        <Text>▼</Text>
       </TouchableOpacity>
 
       {/* Modal pilih kelas */}
       <Modal
         visible={modalVisible}
-        animationType="slide"
         transparent
+        animationType="slide"
         onRequestClose={() => setModalVisible(false)}
       >
-        <View style={common.flex1}>
-          <View style={common.modal}>
-            <View style={common.modalContent}>
-              <Text
-                style={[
-                  common.textLg,
-                  common.fontBold,
-                  common.mb3,
-                  common.textBlack,
-                  common.textCenter,
-                ]}
-              >
-                {preselectedGrade ? `Kelas ${preselectedGrade}` : 'Pilih Kelas'}
-              </Text>
+      <View style={common.modal}>
+          <View style={common.modalContent}>
+            <Text style={[common.subtitle, common.mb2]}>
+              {preselectedGrade ? `Kelas ${preselectedGrade}` : 'Pilih Kelas'}
+            </Text>
 
-              {availableGrades.map((grade) => {
-                const isSelected = selectedClass === `${grade}`;
-                return (
-                  <TouchableOpacity
-                    key={grade}
-                    style={[
-                      button.secondary,
-                      common.flexRow,
-                      common.itemsCenter,
-                      common.justifyBetween,
-                      common.mb2,
-                      {
-                        borderWidth: isSelected ? 2 : 1,
-                        borderColor: isSelected ? colors.primary : colors.gray[100],
-                      },
-                    ]}
-                    onPress={() => handleSelect(grade)}
-                    activeOpacity={0.7}
-                  >
-                    <View style={[common.flexRow, common.itemsCenter]}>
-                      <Text style={{ fontSize: 24, marginRight: 8 }}>
-                        {gradeEmojis[grade - 1]}
-                      </Text>
-                      <Text style={common.textBlack}>Kelas {grade}</Text>
-                    </View>
-                    {isSelected && (
-                      <Text style={[common.textPrimary, common.fontSemibold]}>Dipilih</Text>
-                    )}
-                  </TouchableOpacity>
-                );
-              })}
+            {availableClasses.map((kelas) => {
+              const isSelected = selectedClass === kelas;
+              return (
+                <TouchableOpacity
+                  key={kelas}
+                  style={[
+                    button.secondary,
+                    common.flexRow,
+                    common.itemsCenter,
+                    common.justifyBetween,
+                    common.mb1,
+                    isSelected && { borderColor: colors.primary },
+                  ]}
+                  onPress={() => handleSelect(kelas)}
+                  activeOpacity={0.7}
+                >
+                  <View style={common.flexRow}>
+                    <Text style={{ marginRight: 8 }}>
+                      {emojis[kelas] ?? '🏫'}
+                    </Text>
+                    <Text>Kelas {kelas}</Text>
+                  </View>
+                  {isSelected && (
+                    <Text style={{ color: colors.primary }}>Dipilih</Text>
+                  )}
+                </TouchableOpacity>
+              );
+            })}
 
-              <TouchableOpacity
-                style={[button.primary, common.mt3]}
-                onPress={() => setModalVisible(false)}
-                activeOpacity={0.7}
-              >
-                <Text style={button.textWhite}>Tutup</Text>
-              </TouchableOpacity>
-            </View>
+            <TouchableOpacity
+              style={[button.primary, common.mt2]}
+              onPress={() => setModalVisible(false)}
+              activeOpacity={0.7}
+            >
+              <Text style={button.textWhite}>Tutup</Text>
+            </TouchableOpacity>
           </View>
         </View>
       </Modal>

@@ -1,12 +1,13 @@
-// src/navigation/AppNavigator.tsx
 import React from 'react';
-import { Text, Platform } from 'react-native';
+import { Text } from 'react-native';
 import { NavigationContainer } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { RootStackParamList, MainTabParamList, StudentStackParamList } from '../types';
+
+import {RootStackParamList,MainTabParamList,StudentStackParamList,} from '../types';
 import useStore from '../store/useStore';
+
 import LoginScreen from '../screens/LoginScreen';
 import ClassSelectionScreen from '../screens/ClassSelectionScreen';
 import StudentListScreen from '../screens/StudentListScreen';
@@ -51,6 +52,7 @@ function MainNavigator() {
   return (
     <MainTab.Navigator
       screenOptions={{
+        headerTitleStyle: { fontWeight: '600' },
         tabBarActiveTintColor: '#007AFF',
         tabBarInactiveTintColor: '#8E8E93',
         tabBarStyle: {
@@ -66,10 +68,12 @@ function MainNavigator() {
           fontWeight: '600',
           marginBottom: 4,
         },
-        tabBarIconStyle: { marginTop: 4 },
-        headerTitleStyle: { fontWeight: '600' },
+        tabBarIconStyle: {
+          marginTop: 4,
+        },
       }}
     >
+      {/* TAB SISWA */}
       <MainTab.Screen
         name="StudentHome"
         component={StudentNavigator}
@@ -77,10 +81,21 @@ function MainNavigator() {
           title: 'Siswa',
           headerShown: false,
           tabBarIcon: ({ color }) => (
-            <Text style={{ color, fontSize: 24 }}>👨🎓</Text>
+            <Text style={{ color, fontSize: 24 }}>👨</Text>
           ),
         }}
+        // trik: setiap tab ini ditekan, paksa navigate ke ClassSelection
+        listeners={({ navigation }) => ({
+          tabPress: (e) => {
+            e.preventDefault();
+            navigation.navigate('StudentHome', {
+              screen: 'ClassSelection',
+            } as any);
+          },
+        })}
       />
+
+      {/* TAB LAPORAN */}
       <MainTab.Screen
         name="Reports"
         component={ReportScreen}
@@ -91,6 +106,8 @@ function MainNavigator() {
           ),
         }}
       />
+
+      {/* TAB PROFIL */}
       <MainTab.Screen
         name="Profile"
         component={ProfileScreen}

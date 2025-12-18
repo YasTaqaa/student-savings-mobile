@@ -1,47 +1,59 @@
-// src/screens/LoginScreen.tsx
 import React, { useState } from 'react';
-import {
-  View,
-  Text,
-  TextInput,
-  TouchableOpacity,
-  Alert,
-  KeyboardAvoidingView,
-  Platform,
-  ActivityIndicator,
-} from 'react-native';
+import {View,Text,TextInput,Image,TouchableOpacity,Alert,KeyboardAvoidingView,Platform,ActivityIndicator,} from 'react-native';
 import useStore from '../store/useStore';
 import * as AuthService from '../services/authService';
 import { common, colors, container, button, input } from '../styles/utils';
+import { Ionicons } from '@expo/vector-icons';
+
 
 export default function LoginScreen() {
   const [email, setEmail] = useState('');
+  const Logo = require('../../assets/Logo.png');
   const [password, setPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
   const [role, setRole] = useState<'admin' | 'teacher'>('admin');
   const [loading, setLoading] = useState(false);
 
   const login = useStore((state) => state.login);
 
   const handleLogin = async () => {
-    if (!email.trim() || !password.trim()) {
-      Alert.alert('Error', 'Email dan password harus diisi');
-      return;
-    }
+  if (!email.trim() || !password.trim()) {
+    Alert.alert('Error', 'Username dan password harus diisi');
+    return;
+  }
 
-    setLoading(true);
-    try {
-      const response = await AuthService.login({ email, password, role });
-      if (response.success && response.user) {
-        await login(response.user);
-      } else {
-        Alert.alert('Login Gagal', response.message || 'Terjadi kesalahan');
-      }
-    } catch (error) {
-      Alert.alert('Error', 'Terjadi kesalahan, silakan coba lagi');
-    } finally {
-      setLoading(false);
+  let mappedEmail: string | null = null;
+
+  if (email === 'sdn3linggasariadmin') {
+    mappedEmail = 'sdn3linggasari@sekolah.com';
+  } else if (email === '123456guru') {
+    mappedEmail = '123456guru@sekolah.com';
+  } else {
+    Alert.alert('Error', 'Username tidak dikenali');
+    return;
+  }
+
+  setLoading(true);
+
+  try {
+    const response = await AuthService.login({
+      email: mappedEmail,
+      password,
+      role,
+    });
+
+    if (response.success && response.user) {
+      await login(response.user);
+    } else {
+      Alert.alert('Login Gagal', response.message || 'Terjadi kesalahan');
     }
-  };
+  } catch (error) {
+    Alert.alert('Error', 'Terjadi kesalahan, silakan coba lagi');
+  } finally {
+    setLoading(false);
+  }
+};
+
 
   return (
     <KeyboardAvoidingView
@@ -49,14 +61,39 @@ export default function LoginScreen() {
       behavior={Platform.OS === 'ios' ? 'padding' : undefined}
     >
       <View style={[container.screen, common.p5, { justifyContent: 'center' }]}>
-        <Text style={[common.text2xl, common.fontBold, common.mb3, common.textBlack]}>
-          Sistem Tabungan Siswa
-        </Text>
+        <View style={{ alignItems: 'center', marginBottom: 24, marginTop: 40 }}>
+      <View
+        style={{
+        width: 80,
+        height: 80,
+        borderRadius: 12,
+        backgroundColor: '#ffffff',
+        justifyContent: 'center',
+        alignItems: 'center',
+        marginBottom: 16,
+        shadowColor: '#000',
+        shadowOpacity: 0.05,
+        shadowRadius: 8,
+        elevation: 2,
+      }}
+    >
+      <Image
+        source={Logo}
+        style={{ width: 48, height: 48, resizeMode: 'contain' }}
+      />
+    </View>
 
-        <Text style={input.label}>Email</Text>
+    <Text style={{ fontSize: 20, fontWeight: '600', marginBottom: 4 }}>
+      Sistem Tabungan Siswa
+    </Text>
+    <Text style={{ color: '#6B7280', fontSize: 12 }}>
+      SDN 3 Linggasari
+    </Text>
+  </View>
+        <Text style={input.label}>Username</Text>
         <TextInput
           style={input.base}
-          placeholder="Masukkan email"
+          placeholder="Masukkan username"
           value={email}
           onChangeText={setEmail}
           autoCapitalize="none"
@@ -64,13 +101,32 @@ export default function LoginScreen() {
         />
 
         <Text style={input.label}>Password</Text>
+        <View style={{ position: 'relative' }}>
         <TextInput
           style={input.base}
-          placeholder="Masukkan password"
           value={password}
           onChangeText={setPassword}
-          secureTextEntry
+          placeholder="Password"
+          secureTextEntry={!showPassword}
         />
+        <TouchableOpacity
+        onPress={() => setShowPassword((prev) => !prev)}
+        style={{
+        position: 'absolute',
+        right: 12,
+        top: '50%',
+        transform: [{ translateY: -12 }],
+        padding: 4,
+        }}
+      >
+      <Ionicons
+        name={showPassword ? 'eye-off' : 'eye'}
+        size={20}
+        color={colors.gray[400]}
+        />
+        </TouchableOpacity>
+    </View>
+
 
         <Text style={[input.label, { marginTop: 16 }]}>Masuk sebagai</Text>
         <View style={[common.flexRow, common.mt1]}>

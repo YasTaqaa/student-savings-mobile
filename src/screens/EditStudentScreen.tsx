@@ -1,13 +1,5 @@
-// src/screens/EditStudentScreen.tsx
 import React, { useState } from 'react';
-import {
-  View,
-  Text,
-  TextInput,
-  TouchableOpacity,
-  ScrollView,
-  Alert,
-} from 'react-native';
+import {View,Text,TextInput,TouchableOpacity,ScrollView,Alert,} from 'react-native';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { StudentStackParamList } from '../types';
 import useStore from '../store/useStore';

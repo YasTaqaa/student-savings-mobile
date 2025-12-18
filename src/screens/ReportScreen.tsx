@@ -1,75 +1,259 @@
-import React, { useMemo, useState } from 'react';
-import {
-  View,
-  Text,
-  ScrollView,
-  TouchableOpacity,
-  ActivityIndicator,
-  Alert,
-  Share,
-} from 'react-native';
+import React, {useMemo,useState,useRef,useEffect,useCallback,} from 'react';
+import {View,Text,Animated,TouchableOpacity,ActivityIndicator,Alert,ScrollView,} from 'react-native';
+import { useFocusEffect } from '@react-navigation/native';
+
 import useStore from '../store/useStore';
 import { common, colors, container } from '../styles/utils';
-import {
-  generateClassReportPDF,
-  ClassReport,
-  Student,
-  Transaction,
-} from '../services/pdfService';
-import * as Sharing from 'expo-sharing';
+import {generateClassReportPDF,ClassReport,Student,Transaction,} from '../services/pdfService';
 
+type ReportItemProps = {
+  report: ClassReport;
+  index: number;
+  grandTotal: number;
+  students: Student[];
+  transactions: Transaction[];
+  loadingClass: string | null;
+  onExport: (className: string) => void;
+  formatCurrency: (amount: number) => string;
+};
 
+function ReportItem({
+  report,
+  index,
+  grandTotal,
+  students,
+  transactions,
+  loadingClass,
+  onExport,
+  formatCurrency,
+}: ReportItemProps) {
+  const itemOpacity = useRef(new Animated.Value(0)).current;
+  const itemTranslate = useRef(new Animated.Value(10)).current;
+
+  useEffect(() => {
+    Animated.parallel([
+      Animated.timing(itemOpacity, {
+        toValue: 1,
+        duration: 300,
+        delay: index * 80,
+        useNativeDriver: true,
+      }),
+      Animated.timing(itemTranslate, {
+        toValue: 0,
+        duration: 300,
+        delay: index * 80,
+        useNativeDriver: true,
+      }),
+    ]).start();
+  }, [itemOpacity, itemTranslate, index]);
+
+  const percentage =
+    grandTotal > 0
+      ? ((report.totalBalance / grandTotal) * 100).toFixed(1)
+      : '0.0';
+
+  return (
+    <Animated.View
+      style={{
+        opacity: itemOpacity,
+        transform: [{ translateY: itemTranslate }],
+      }}
+    >
+      <View
+        style={[
+          common.bgWhite,
+          common.roundedLg,
+          common.p4,
+          common.mb3,
+          common.shadow,
+        ]}
+      >
+        {/* Header kelas */}
+        <View
+          style={[common.flexRow, common.justifyBetween, common.mb1]}
+        >
+          <View style={common.flexRow}>
+            <Text style={{ marginRight: 8 }}>📊</Text>
+            <View>
+              <Text style={common.fontSemibold}>
+                Kelas {report.className}
+              </Text>
+            </View>
+          </View>
+          <Text style={common.caption}>
+            {report.totalStudents} siswa terdaftar
+          </Text>
+        </View>
+
+        {/* Ringkasan saldo kelas */}
+        <View
+          style={[
+            common.flexRow,
+            common.justifyBetween,
+            common.mb2,
+          ]}
+        >
+          <View>
+            <Text style={common.caption}>Saldo Saat Ini</Text>
+            <Text
+              style={[common.fontSemibold, common.textPrimary]}
+            >
+              {formatCurrency(report.totalBalance)}
+            </Text>
+          </View>
+          <View style={{ alignItems: 'flex-end' }}>
+            <Text style={common.caption}>Total Setoran</Text>
+            <Text
+              style={[
+                common.fontSemibold,
+                { color: colors.success },
+              ]}
+            >
+              + {formatCurrency(report.totalDeposits)}
+            </Text>
+            <Text style={common.caption}>Total Penarikan</Text>
+            <Text
+              style={[
+                common.fontSemibold,
+                { color: colors.danger },
+              ]}
+            >
+              - {formatCurrency(report.totalWithdrawals)}
+            </Text>
+          </View>
+        </View>
+
+        {/* Daftar siswa singkat */}
+        <Text style={[common.caption, common.mb1]}>
+          Detail Siswa Kelas {report.className}
+        </Text>
+        {students
+          .filter((s) => s.class === report.className)
+          .map((student) => {
+            const studentTransactions = transactions.filter(
+              (t) => t.studentId === student.id,
+            );
+
+            const totalSetoran = studentTransactions
+              .filter((t) => t.type === 'deposit')
+              .reduce((sum, t) => sum + t.amount, 0);
+
+            const totalPenarikan = studentTransactions
+              .filter((t) => t.type === 'withdrawal')
+              .reduce((sum, t) => sum + t.amount, 0);
+
+            return (
+              <View
+                key={student.id}
+                style={[common.mt1, common.flexRow]}
+              >
+                <View style={{ flex: 1 }}>
+                  <Text style={common.fontSemibold}>
+                    {student.name}
+                  </Text>
+                  <Text style={common.caption}>
+                    Saldo: {formatCurrency(student.balance)}
+                  </Text>
+                  <Text style={common.caption}>
+                    Setoran: {formatCurrency(totalSetoran)} • Penarikan:{' '}
+                    {formatCurrency(totalPenarikan)}
+                  </Text>
+                </View>
+              </View>
+            );
+          })}
+
+        {/* Tombol Export PDF per kelas */}
+        {report.className && (
+          <TouchableOpacity
+            onPress={() => onExport(report.className!)}
+            disabled={loadingClass === report.className}
+            style={[
+              common.mt3,
+              common.bgPrimary,
+              common.roundedLg,
+              common.itemsCenter,
+              common.py3,
+            ]}
+            activeOpacity={0.7}
+          >
+            {loadingClass === report.className ? (
+              <ActivityIndicator color="#fff" />
+            ) : (
+              <Text
+                style={[common.fontSemibold, { color: '#fff' }]}
+              >
+                📥 Export PDF
+              </Text>
+            )}
+          </TouchableOpacity>
+        )}
+      </View>
+    </Animated.View>
+  );
+}
+
+// ===== Komponen utama =====
 export default function ReportScreen() {
-  const [loadingGrade, setLoadingGrade] = useState<number | null>(null);
-  const [lastPdfUri, setLastPdfUri] = useState<string | null>(null);
+  const [loadingClass, setLoadingClass] = useState<string | null>(null);
+  const [selectedClass, setSelectedClass] = useState<string | null>(null);
+  const [isDropdownOpen, setIsDropdownOpen] = useState(false);
 
-  const user = useStore((state) => state.user);
   const students = useStore((state) => state.students) as Student[];
-  const transactions = useStore((state) => state.transactions) as Transaction[];
+  const transactions = useStore(
+    (state) => state.transactions,
+  ) as Transaction[];
 
   // ====== Hitung laporan per kelas ======
   const classReports: ClassReport[] = useMemo(() => {
-    const gradeGroups = new Map<number, Student[]>();
+    const classMap = new Map<string, Student[]>();
 
-    for (let grade = 1; grade <= 6; grade++) {
-      const gradeStudents = students.filter((s) => s.grade === grade);
-      if (gradeStudents.length > 0) {
-        gradeGroups.set(grade, gradeStudents);
+    students.forEach((s) => {
+      if (!classMap.has(s.class)) {
+        classMap.set(s.class, []);
       }
-    }
+      classMap.get(s.class)!.push(s);
+    });
 
-    const reports: ClassReport[] = Array.from(gradeGroups.entries()).map(
-      ([grade, gradeStudents]) => {
-        const totalBalance = gradeStudents.reduce(
+    const reports: ClassReport[] = Array.from(classMap.entries()).map(
+      ([className, classStudents]) => {
+        const totalBalance = classStudents.reduce(
           (sum, s) => sum + s.balance,
-          0
+          0,
         );
 
-        const studentIds = gradeStudents.map((s) => s.id);
-        const gradeTransactions = transactions.filter((t) =>
-          studentIds.includes(t.studentId)
+        const studentIds = classStudents.map((s) => s.id);
+        const classTransactions = transactions.filter((t) =>
+          studentIds.includes(t.studentId),
         );
 
-        const totalDeposits = gradeTransactions
+        const totalDeposits = classTransactions
           .filter((t) => t.type === 'deposit')
           .reduce((sum, t) => sum + t.amount, 0);
 
-        const totalWithdrawals = gradeTransactions
+        const totalWithdrawals = classTransactions
           .filter((t) => t.type === 'withdrawal')
           .reduce((sum, t) => sum + t.amount, 0);
 
+        const gradeNumber = parseInt(className.charAt(0), 10);
+
         return {
-          grade,
-          className: `${grade}`,
-          totalStudents: gradeStudents.length,
+          grade: isNaN(gradeNumber) ? 0 : gradeNumber,
+          className,
+          totalStudents: classStudents.length,
           totalBalance,
           totalDeposits,
           totalWithdrawals,
         };
-      }
+      },
     );
 
-    return reports;
+    return reports.sort((a, b) => {
+      if (a.grade !== b.grade) return a.grade - b.grade;
+      const ca = a.className ?? '';
+      const cb = b.className ?? '';
+      return ca.localeCompare(cb);
+    });
   }, [students, transactions]);
 
   const formatCurrency = (amount: number) =>
@@ -77,499 +261,286 @@ export default function ReportScreen() {
 
   const grandTotal = classReports.reduce(
     (sum, report) => sum + report.totalBalance,
-    0
+    0,
   );
   const totalStudents = classReports.reduce(
     (sum, report) => sum + report.totalStudents,
-    0
+    0,
   );
   const totalDeposits = classReports.reduce(
     (sum, report) => sum + report.totalDeposits,
-    0
+    0,
   );
   const totalWithdrawals = classReports.reduce(
     (sum, report) => sum + report.totalWithdrawals,
-    0
+    0,
   );
 
-  // ====== Export + popup Selesai/Bagikan ======
-  const handleExportPDF = async (grade: number) => {
-    const report = classReports.find((r) => r.grade === grade);
+  // ====== Animations ======
+  const summaryOpacity = useRef(new Animated.Value(0)).current;
+  const summaryTranslateY = useRef(new Animated.Value(20)).current;
+  const listOpacity = useRef(new Animated.Value(0)).current;
+  const listTranslateY = useRef(new Animated.Value(20)).current;
+
+  useFocusEffect(
+    useCallback(() => {
+      summaryOpacity.setValue(0);
+      summaryTranslateY.setValue(20);
+      listOpacity.setValue(0);
+      listTranslateY.setValue(20);
+
+      Animated.parallel([
+        Animated.timing(summaryOpacity, {
+          toValue: 1,
+          duration: 400,
+          useNativeDriver: true,
+        }),
+        Animated.timing(summaryTranslateY, {
+          toValue: 0,
+          duration: 400,
+          useNativeDriver: true,
+        }),
+        Animated.timing(listOpacity, {
+          toValue: 1,
+          duration: 500,
+          delay: 150,
+          useNativeDriver: true,
+        }),
+        Animated.timing(listTranslateY, {
+          toValue: 0,
+          duration: 500,
+          delay: 150,
+          useNativeDriver: true,
+        }),
+      ]).start();
+
+      return () => {};
+    }, [summaryOpacity, summaryTranslateY, listOpacity, listTranslateY]),
+  );
+
+  const handleExportPDF = async (className: string) => {
+    const report = classReports.find((r) => r.className === className);
     if (!report) return;
 
-    setLoadingGrade(grade);
+    setLoadingClass(className);
+
     try {
       const fileUri = await generateClassReportPDF(
         report,
         students,
         transactions,
-        'SD Negeri 3 Linggasari'
+        'SD Negeri 3 Linggasari',
       );
 
       if (!fileUri) {
         Alert.alert('Error', 'Gagal menyimpan PDF');
       } else {
-        setLastPdfUri(fileUri);
-
         Alert.alert(
-  'Berhasil',
-  'PDF laporan kelas sudah disimpan.',
-  [
-    { text: 'Selesai', style: 'cancel' },
-    {
-      text: 'Bagikan',
-      onPress: async () => {
-        try {
-          const canShare = await Sharing.isAvailableAsync();
-          if (!canShare) {
-            Alert.alert(
-              'Info',
-              'Fitur berbagi file tidak tersedia di perangkat ini.'
-            );
-            return;
-          }
-
-          await Sharing.shareAsync(fileUri, {
-            dialogTitle: `Laporan Kelas ${grade}`,
-            mimeType: 'application/pdf',
-          });
-        } catch (e) {
-          console.error('Error share:', e);
-          Alert.alert('Error', 'Gagal berbagi laporan');
-        }
-      },
-    },
-  ],
-  { cancelable: true }
-);
-
+          'Berhasil',
+          `PDF laporan kelas ${className} sudah disimpan di perangkat.`,
+        );
       }
     } catch (e) {
       console.error('Error handleExportPDF:', e);
       Alert.alert('Error', 'Gagal membuat laporan');
     } finally {
-      setLoadingGrade(null);
+      setLoadingClass(null);
     }
   };
 
-  return (
-    <View style={[container.screen, { backgroundColor: colors.gray[50] }]}>
-      <ScrollView
-        contentContainerStyle={{ padding: 16, paddingBottom: 32 }}
-        showsVerticalScrollIndicator={false}
-      >
-        {/* Header */}
-        <View style={{ marginBottom: 16 }}>
-          <Text style={[common.title, { marginBottom: 4 }]}>
-            Laporan Tabungan
-          </Text>
-          <Text style={[common.subtitle, { marginBottom: 4 }]}>
-            Rekap detail per kelas tingkat
-          </Text>
-          {user && (
-            <Text style={common.caption}>
-              Pengguna: {user.name}{' '}
-              {user.role === 'admin' ? '(Admin)' : '(Guru)'}
-            </Text>
-          )}
-        </View>
+  // ====== Filter tampilan per kelas ======
+  const visibleReports = useMemo(() => {
+    if (!selectedClass) return classReports;
+    return classReports.filter((r) => r.className === selectedClass);
+  }, [classReports, selectedClass]);
 
-        {/* Ringkasan keseluruhan */}
+  return (
+    <ScrollView
+      style={container.screen}
+      contentContainerStyle={{ padding: 16, paddingBottom: 32 }}
+    >
+      <Text style={[common.title, common.mb1]}>Laporan Tabungan</Text>
+      <Text style={[common.caption, common.mb3]}>
+        Rekap detail per kelas tingkat
+      </Text>
+
+      {/* Ringkasan Keseluruhan */}
+      <Animated.View
+        style={{
+          opacity: summaryOpacity,
+          transform: [{ translateY: summaryTranslateY }],
+        }}
+      >
         <View
-          style={{
-            backgroundColor: '#F5F5FB',
-            borderRadius: 12,
-            padding: 12,
-            marginBottom: 12,
-          }}
+          style={[
+            common.bgWhite,
+            common.roundedLg,
+            common.p4,
+            common.shadow,
+            common.mb4,
+          ]}
         >
-          <Text
-            style={{
-              fontSize: 14,
-              fontWeight: '600',
-              marginBottom: 8,
-              color: colors.black,
-            }}
-          >
+          <Text style={[common.subtitle, common.mb2]}>
             Ringkasan Keseluruhan
           </Text>
 
-          <View
-            style={{
-              flexDirection: 'row',
-              flexWrap: 'wrap',
-              justifyContent: 'space-between',
-            }}
-          >
-            <View
-              style={{
-                width: '48%',
-                backgroundColor: colors.white,
-                borderRadius: 10,
-                padding: 10,
-                marginBottom: 8,
-              }}
-            >
-              <Text style={{ fontSize: 12, color: colors.gray[500] }}>
-                Total Saldo
-              </Text>
-              <Text
-                style={{
-                  marginTop: 4,
-                  fontSize: 16,
-                  fontWeight: '700',
-                  color: colors.primary,
-                }}
-              >
+          <View style={[common.flexRow, common.justifyBetween, common.mb2]}>
+            <View>
+              <Text style={common.caption}>Total Saldo</Text>
+              <Text style={[common.title, common.textPrimary]}>
                 {formatCurrency(grandTotal)}
               </Text>
             </View>
-
-            <View
-              style={{
-                width: '48%',
-                backgroundColor: colors.white,
-                borderRadius: 10,
-                padding: 10,
-                marginBottom: 8,
-              }}
-            >
-              <Text style={{ fontSize: 12, color: colors.gray[500] }}>
-                Total Siswa
-              </Text>
-              <Text
-                style={{
-                  marginTop: 4,
-                  fontSize: 16,
-                  fontWeight: '700',
-                  color: colors.black,
-                }}
-              >
-                {totalStudents}
-              </Text>
+            <View style={{ alignItems: 'flex-end' }}>
+              <Text style={common.caption}>Total Siswa</Text>
+              <Text style={[common.title]}>{totalStudents}</Text>
             </View>
+          </View>
 
-            <View
-              style={{
-                width: '48%',
-                backgroundColor: colors.white,
-                borderRadius: 10,
-                padding: 10,
-                marginBottom: 8,
-              }}
-            >
-              <Text style={{ fontSize: 12, color: colors.gray[500] }}>
-                Total Setoran
-              </Text>
-              <Text
-                style={{
-                  marginTop: 4,
-                  fontSize: 16,
-                  fontWeight: '700',
-                  color: colors.success,
-                }}
-              >
+          <View style={[common.flexRow, common.justifyBetween]}>
+            <View>
+              <Text style={common.caption}>Total Setoran</Text>
+              <Text style={[common.fontSemibold, { color: colors.success }]}>
                 {formatCurrency(totalDeposits)}
               </Text>
             </View>
-
-            <View
-              style={{
-                width: '48%',
-                backgroundColor: colors.white,
-                borderRadius: 10,
-                padding: 10,
-                marginBottom: 8,
-              }}
-            >
-              <Text style={{ fontSize: 12, color: colors.gray[500] }}>
-                Total Penarikan
-              </Text>
-              <Text
-                style={{
-                  marginTop: 4,
-                  fontSize: 16,
-                  fontWeight: '700',
-                  color: colors.danger,
-                }}
-              >
+            <View style={{ alignItems: 'flex-end' }}>
+              <Text style={common.caption}>Total Penarikan</Text>
+              <Text style={[common.fontSemibold, { color: colors.danger }]}>
                 {formatCurrency(totalWithdrawals)}
               </Text>
             </View>
           </View>
         </View>
+      </Animated.View>
 
-        {/* Detail per kelas */}
-        <View style={{ marginTop: 8 }}>
-          <Text
-            style={{
-              fontSize: 14,
-              fontWeight: '600',
-              marginBottom: 8,
-              color: colors.black,
-            }}
+      {/* Detail Per Kelas + DROPDOWN */}
+      <Animated.View
+        style={{
+          opacity: listOpacity,
+          transform: [{ translateY: listTranslateY }],
+        }}
+      >
+        <Text style={[common.subtitle, common.mb1]}>Detail Per Kelas</Text>
+
+        {/* Dropdown pilih kelas */}
+        <View style={[common.mb3]}>
+          <TouchableOpacity
+            onPress={() => setIsDropdownOpen((v) => !v)}
+            style={[
+              common.bgWhite,
+              common.roundedLg,
+              common.p3,
+              common.flexRow,
+              common.itemsCenter,
+              common.justifyBetween,
+              common.shadow,
+            ]}
+            activeOpacity={0.7}
           >
-            Detail Per Kelas
-          </Text>
+            <Text>
+              {selectedClass
+                ? `Kelas ${selectedClass}`
+                : 'Pilih kelas (semua kelas)'}
+            </Text>
+            <Text>{isDropdownOpen ? '▲' : '▼'}</Text>
+          </TouchableOpacity>
 
-          {classReports.length === 0 ? (
+          {isDropdownOpen && (
             <View
-              style={{
-                backgroundColor: colors.white,
-                borderRadius: 12,
-                padding: 16,
-                alignItems: 'center',
-              }}
+              style={[
+                common.bgWhite,
+                common.roundedLg,
+                common.mt1,
+                common.shadow,
+              ]}
             >
-              <Text style={{ fontSize: 14, fontWeight: '600' }}>
-                Belum Ada Data Laporan
-              </Text>
-              <Text
-                style={{
-                  fontSize: 12,
-                  color: colors.gray[500],
-                  marginTop: 4,
-                  textAlign: 'center',
-                }}
-              >
-                Tambahkan siswa dari tab Siswa untuk melihat laporan.
-              </Text>
-            </View>
-          ) : (
-            classReports.map((report) => {
-              const percentage =
-                grandTotal > 0
-                  ? ((report.totalBalance / grandTotal) * 100).toFixed(1)
-                  : '0.0';
-
-              return (
-                <View
-                  key={report.grade}
-                  style={{
-                    backgroundColor: colors.white,
-                    borderRadius: 16,
-                    padding: 14,
-                    marginBottom: 12,
+              <ScrollView style={{ maxHeight: 220 }} nestedScrollEnabled>
+                {/* Opsi: semua kelas */}
+                <TouchableOpacity
+                  onPress={() => {
+                    setSelectedClass(null);
+                    setIsDropdownOpen(false);
                   }}
+                  style={[
+                    common.p3,
+                    { borderBottomWidth: 1, borderBottomColor: '#eee' },
+                  ]}
                 >
-                  {/* Header kelas */}
-                  <View
-                    style={{
-                      flexDirection: 'row',
-                      justifyContent: 'space-between',
-                      alignItems: 'center',
-                      marginBottom: 8,
-                    }}
-                  >
-                    <View>
-                      <Text
-                        style={{
-                          fontSize: 14,
-                          fontWeight: '700',
-                          color: colors.black,
-                        }}
-                      >
-                        Kelas {report.grade}
-                      </Text>
-                      <Text
-                        style={{
-                          fontSize: 12,
-                          color: colors.gray[500],
-                          marginTop: 2,
-                        }}
-                      >
-                        {report.totalStudents} siswa terdaftar
-                      </Text>
-                    </View>
-                    {grandTotal > 0 && (
-                      <Text
-                        style={{
-                          fontSize: 12,
-                          color: colors.gray[500],
-                          fontWeight: '600',
-                        }}
-                      >
-                        {percentage}% dari total saldo
-                      </Text>
-                    )}
-                  </View>
+                  <Text>Semua kelas</Text>
+                </TouchableOpacity>
 
-                  {/* Ringkasan saldo kelas */}
-                  <View style={{ marginTop: 4, marginBottom: 8 }}>
-                    <Text
-                      style={{
-                        fontSize: 12,
-                        fontWeight: '600',
-                        marginBottom: 4,
-                        color: colors.gray[500],
-                      }}
-                    >
-                      Saldo Saat Ini
-                    </Text>
-                    <Text
-                      style={{
-                        fontSize: 16,
-                        fontWeight: '700',
-                        color: colors.primary,
-                        marginBottom: 6,
-                      }}
-                    >
-                      {formatCurrency(report.totalBalance)}
-                    </Text>
-
-                    <View
-                      style={{
-                        flexDirection: 'row',
-                        justifyContent: 'space-between',
-                      }}
-                    >
-                      <View>
-                        <Text
-                          style={{ fontSize: 12, color: colors.gray[500] }}
-                        >
-                          Total Setoran
-                        </Text>
-                        <Text
-                          style={{
-                            fontSize: 14,
-                            fontWeight: '600',
-                            color: colors.success,
-                            marginTop: 2,
-                          }}
-                        >
-                          + {formatCurrency(report.totalDeposits)}
-                        </Text>
-                      </View>
-
-                      <View style={{ alignItems: 'flex-end' }}>
-                        <Text
-                          style={{ fontSize: 12, color: colors.gray[500] }}
-                        >
-                          Total Penarikan
-                        </Text>
-                        <Text
-                          style={{
-                            fontSize: 14,
-                            fontWeight: '600',
-                            color: colors.danger,
-                            marginTop: 2,
-                          }}
-                        >
-                          - {formatCurrency(report.totalWithdrawals)}
-                        </Text>
-                      </View>
-                    </View>
-                  </View>
-
-                  {/* Daftar siswa singkat */}
-                  <View style={{ marginTop: 6 }}>
-                    <Text
-                      style={{
-                        fontSize: 12,
-                        fontWeight: '600',
-                        marginBottom: 4,
-                        color: colors.gray[500],
-                      }}
-                    >
-                      Detail Siswa Kelas {report.grade}
-                    </Text>
-
-                    {students
-                      .filter((s) => s.grade === report.grade)
-                      .map((student) => {
-                        const studentTransactions = transactions.filter(
-                          (t) => t.studentId === student.id
-                        );
-
-                        const totalSetoran = studentTransactions
-                          .filter((t) => t.type === 'deposit')
-                          .reduce((sum, t) => sum + t.amount, 0);
-
-                        const totalPenarikan = studentTransactions
-                          .filter((t) => t.type === 'withdrawal')
-                          .reduce((sum, t) => sum + t.amount, 0);
-
-                        return (
-                          <View
-                            key={student.id}
-                            style={{
-                              paddingVertical: 6,
-                              borderBottomWidth: 0.5,
-                              borderBottomColor: colors.gray[100],
-                            }}
-                          >
-                            <Text
-                              style={{
-                                fontSize: 13,
-                                fontWeight: '600',
-                                color: colors.black,
-                              }}
-                            >
-                              {student.name}
-                            </Text>
-                            <Text
-                              style={{
-                                fontSize: 11,
-                                color: colors.gray[500],
-                              }}
-                            >
-                              Saldo: {formatCurrency(student.balance)}
-                            </Text>
-                            <Text
-                              style={{
-                                fontSize: 11,
-                                color: colors.success,
-                              }}
-                            >
-                              Setoran: {formatCurrency(totalSetoran)}
-                            </Text>
-                            <Text
-                              style={{
-                                fontSize: 11,
-                                color: colors.danger,
-                              }}
-                            >
-                              Penarikan: {formatCurrency(totalPenarikan)}
-                            </Text>
-                          </View>
-                        );
-                      })}
-                  </View>
-
-                  {/* Satu tombol Export PDF */}
+                {/* Opsi per kelas */}
+                {classReports.map((r) => (
                   <TouchableOpacity
-                    style={{
-                      marginTop: 10,
-                      backgroundColor: colors.primary,
-                      flexDirection: 'row',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      paddingVertical: 8,
-                      borderRadius: 8,
+                    key={r.className}
+                    onPress={() => {
+                      setSelectedClass(r.className || '');
+                      setIsDropdownOpen(false);
                     }}
-                    onPress={() => handleExportPDF(report.grade)}
-                    disabled={loadingGrade === report.grade}
+                    style={[
+                      common.p3,
+                      { borderBottomWidth: 1, borderBottomColor: '#eee' },
+                    ]}
                   >
-                    {loadingGrade === report.grade ? (
-                      <ActivityIndicator color={colors.white} size="small" />
-                    ) : (
-                      <Text
-                        style={{
-                          fontSize: 13,
-                          fontWeight: '600',
-                          color: colors.white,
-                        }}
-                      >
-                        📥 Export PDF
-                      </Text>
-                    )}
+                    <Text>Kelas {r.className}</Text>
+                    <Text style={common.caption}>
+                      {r.totalStudents} siswa • {formatCurrency(r.totalBalance)}
+                    </Text>
                   </TouchableOpacity>
-                </View>
-              );
-            })
+                ))}
+              </ScrollView>
+            </View>
           )}
         </View>
-      </ScrollView>
-    </View>
+
+        {classReports.length === 0 ? (
+          <View
+            style={[
+              common.bgWhite,
+              common.roundedLg,
+              common.p4,
+              common.itemsCenter,
+            ]}
+          >
+            <Text style={[common.fontSemibold, common.mb1]}>
+              Belum Ada Data Laporan
+            </Text>
+            <Text style={common.caption}>
+              Tambahkan siswa dari tab Siswa untuk melihat laporan.
+            </Text>
+          </View>
+        ) : visibleReports.length === 0 ? (
+          <View
+            style={[
+              common.bgWhite,
+              common.roundedLg,
+              common.p3,
+              common.itemsCenter,
+            ]}
+          >
+            <Text style={common.caption}>
+              Tidak ada kelas yang cocok dengan pilihan.
+            </Text>
+          </View>
+        ) : (
+          <>
+            {visibleReports.map((report, index) => (
+              <ReportItem
+                key={report.className}
+                report={report}
+                index={index}
+                grandTotal={grandTotal}
+                students={students}
+                transactions={transactions}
+                loadingClass={loadingClass}
+                onExport={handleExportPDF}
+                formatCurrency={formatCurrency}
+              />
+            ))}
+          </>
+        )}
+      </Animated.View>
+    </ScrollView>
   );
 }

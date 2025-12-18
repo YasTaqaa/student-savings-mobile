@@ -1,4 +1,5 @@
 import React, { useEffect } from 'react';
+import { View, ActivityIndicator } from 'react-native';
 import { LogBox } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
@@ -6,25 +7,37 @@ import { SafeAreaProvider } from 'react-native-safe-area-context';
 import AppNavigator from './src/navigation/AppNavigator';
 import useStore from './src/store/useStore';
 
-// Pindah ke paling atas, jalankan sekali sebelum komponen
-LogBox.ignoreLogs([
-  '@firebase/auth: Auth (12.6.0):',
-]);
+LogBox.ignoreLogs(['@firebase/auth: Auth (12.6.0):']);
 
 export default function App() {
   const loadData = useStore((state) => state.loadData);
-  const isAuthenticated = useStore((state) => state.isAuthenticated);
+  const isAppReady = useStore((state) => state.isAppReady);
 
   useEffect(() => {
-    if (isAuthenticated) {
-      loadData();
-    }
-  }, [isAuthenticated]);
+    loadData(); 
+  }, [loadData]);
+
+  if (!isAppReady) {
+    return (
+      <SafeAreaProvider>
+        <View
+          style={{
+            flex: 1,
+            alignItems: 'center',
+            justifyContent: 'center',
+          }}
+        >
+          <ActivityIndicator size="large" />
+          <StatusBar style="auto" />
+        </View>
+      </SafeAreaProvider>
+    );
+  }
 
   return (
     <SafeAreaProvider>
-      <StatusBar style="auto" />
       <AppNavigator />
+      <StatusBar style="auto" />
     </SafeAreaProvider>
   );
 }

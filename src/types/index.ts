@@ -64,7 +64,7 @@ export type MainTabParamList = {
 
 export type StudentStackParamList = {
   ClassSelection: undefined;
-  StudentList: { grade: number };
+  StudentList: { grade: number; className?: string };
   StudentDetail: { studentId: string };
   Transaction: { studentId: string };
   EditStudent: { studentId: string };
