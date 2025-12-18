@@ -23,7 +23,7 @@ export default function EditStudentScreen({ route, navigation }: Props) {
 
   const [nis, setNis] = useState(student?.nis || '');
   const [name, setName] = useState(student?.name || '');
-  const [grade, setGrade] = useState<number>(student?.grade || 1);
+  const [grade, setGrade] = useState<number>(Number(student?.grade) || 1);
   const [studentClass, setStudentClass] = useState(student?.class || '');
   const currentBalance = student?.balance || 0;
 

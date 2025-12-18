@@ -4,19 +4,17 @@ export interface User {
   name: string;
   role: 'admin' | 'teacher';
 }
-
 export interface Student {
   category: string;
   id: string;
   nis: string;
   name: string;
-  class: string;
-  grade: number;
+  class: string;   
+  grade: string;    
   balance: number;
   createdAt: string;
   updatedAt: string;
 }
-
 export interface Transaction {
   id: string;
   studentId: string;
@@ -25,28 +23,32 @@ export interface Transaction {
   date: string;
   description: string;
   createdBy: string;
-  note?: string; // supaya addTransaction pakai note tidak error
+  note?: string; 
 }
-
 export interface ClassReport {
-  className: string;
+  className: string; // contoh: "4A"
   totalStudents: number;
   totalBalance: number;
   totalDeposits: number;
   totalWithdrawals: number;
 }
 
+// =====================
+// STUDENT SECTION (LIST)
+// =====================
 export interface StudentSection {
-  title: string;
-  grade: number;
+  title: string;      // contoh: "Kelas 4A"
+  grade: string;      // contoh: "4A"
   data: Student[];
 }
 
-// TAMBAH INTERFACE INI
+// =====================
+// CLASS GROUP
+// =====================
 export interface ClassGroup {
-  grade: number;
-  title: string;
-  classes: string[];
+  grade: string;      // contoh: "4"
+  title: string;      // contoh: "Kelas 4"
+  classes: string[];  // ["4A", "4B"]
   totalStudents: number;
   totalBalance: number;
 }
@@ -64,26 +66,68 @@ export type MainTabParamList = {
 
 export type StudentStackParamList = {
   ClassSelection: undefined;
-  StudentList: { grade: number; className?: string };
+  StudentList: { grade: number };
   StudentDetail: { studentId: string };
   Transaction: { studentId: string };
   EditStudent: { studentId: string };
   EditTransaction: { studentId: string; transactionId: string };
 };
 
-export const CLASS_OPTIONS = [
-  { grade: 1, classes: ['1'] },
-  { grade: 2, classes: ['2'] },
-  { grade: 3, classes: ['3'] },
-  { grade: 4, classes: ['4'] },
-  { grade: 5, classes: ['5'] },
-  { grade: 6, classes: ['6'] },
+// =====================
+// CLASS OPTIONS
+// =====================
+export const CLASS_OPTIONS: ClassGroup[] = [
+  {
+    grade: '1',
+    title: 'Kelas 1',
+    classes: ['1A'],
+    totalStudents: 0,
+    totalBalance: 0,
+  },
+  {
+    grade: '2',
+    title: 'Kelas 2',
+    classes: ['2A'],
+    totalStudents: 0,
+    totalBalance: 0,
+  },
+  {
+    grade: '3',
+    title: 'Kelas 3',
+    classes: ['3A'],
+    totalStudents: 0,
+    totalBalance: 0,
+  },
+  {
+    grade: '4',
+    title: 'Kelas 4',
+    classes: ['4A', '4B'],
+    totalStudents: 0,
+    totalBalance: 0,
+  },
+  {
+    grade: '5',
+    title: 'Kelas 5',
+    classes: ['5A'],
+    totalStudents: 0,
+    totalBalance: 0,
+  },
+  {
+    grade: '6',
+    title: 'Kelas 6',
+    classes: ['6A', '6B'],
+    totalStudents: 0,
+    totalBalance: 0,
+  },
 ];
 
+// =====================
+// HELPERS
+// =====================
 export const getAllClasses = (): string[] => {
   return CLASS_OPTIONS.flatMap(option => option.classes);
 };
 
-export const getGradeFromClass = (className: string): number => {
-  return parseInt(className.charAt(0));
+export const getGradeFromClass = (className: string): string => {
+  return className.charAt(0);
 };

@@ -175,7 +175,7 @@ const useStore = create<StoreState>((set, get) => ({
     const gradeGroups = new Map<number, Student[]>();
 
     for (let grade = 1; grade <= 6; grade++) {
-      const gradeStudents = students.filter((s) => s.grade === grade);
+      const gradeStudents = students.filter((s) => s.grade === String(grade));
       if (gradeStudents.length > 0) gradeGroups.set(grade, gradeStudents);
     }
 

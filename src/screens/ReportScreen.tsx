@@ -199,7 +199,7 @@ export default function ReportScreen() {
   const [selectedClass, setSelectedClass] = useState<string | null>(null);
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
 
-  const students = useStore((state) => state.students) as Student[];
+  const students = useStore((state) => state.students) as unknown as Student[];
   const transactions = useStore(
     (state) => state.transactions,
   ) as Transaction[];
