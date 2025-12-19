@@ -68,7 +68,6 @@ export default function ClassPicker({
         <Text>▼</Text>
       </TouchableOpacity>
 
-      {/* Modal pilih kelas */}
       <Modal
         visible={modalVisible}
         transparent

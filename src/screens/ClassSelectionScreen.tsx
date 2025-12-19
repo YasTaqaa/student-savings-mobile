@@ -106,7 +106,6 @@ const handleSelectClass = (grade: string, className?: string) => {
             common.bgWhite,
             common.roundedLg,
             common.p4,
-            common.shadow,
             common.mb4,
           ]}
         >
@@ -176,7 +175,6 @@ const handleSelectClass = (grade: string, className?: string) => {
                   common.justifyBetween,
                   common.itemsCenter,
                   common.roundedLg,
-                  common.shadow,
                 ]}
               >
                 <View style={common.flexRow}>

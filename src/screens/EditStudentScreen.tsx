@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import {View,Text,TextInput,TouchableOpacity,ScrollView,Alert,} from 'react-native';
+import {View,Text,TextInput,TouchableOpacity,ScrollView,Alert,KeyboardAvoidingView,Platform} from 'react-native';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { StudentStackParamList } from '../types';
 import useStore from '../store/useStore';
@@ -73,7 +73,6 @@ export default function EditStudentScreen({ route, navigation }: Props) {
   };
 
   const handleSaveReadonly = () => {
-    // untuk guru: tidak mengubah data, hanya kembali
     navigation.goBack();
   };
 
@@ -143,10 +142,18 @@ export default function EditStudentScreen({ route, navigation }: Props) {
   };
 
   return (
-    <ScrollView style={container.screen} contentContainerStyle={common.p5}>
-      <Text style={[common.text2xl, common.fontBold, common.mb4, common.textBlack]}>
-        Edit Data Siswa
-      </Text>
+    <KeyboardAvoidingView
+      style={[container.screen, common.bgGray100]}
+      behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+      keyboardVerticalOffset={100}
+    >
+      <ScrollView
+        contentContainerStyle={[common.p4, { paddingBottom: 200 }]}
+        keyboardShouldPersistTaps="handled"
+      >
+        <Text style={[common.textLg, common.fontBold, common.mb4]}>
+          Edit Data Siswa
+        </Text>
 
       {/* NIS */}
       <Text style={[common.textSm, common.fontSemibold, common.textGray700]}>
@@ -276,5 +283,6 @@ export default function EditStudentScreen({ route, navigation }: Props) {
         </TouchableOpacity>
       </View>
     </ScrollView>
+    </KeyboardAvoidingView>
   );
 }

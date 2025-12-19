@@ -65,7 +65,6 @@ function ReportItem({
           common.roundedLg,
           common.p4,
           common.mb3,
-          common.shadow,
         ]}
       >
         {/* Header kelas */}
@@ -342,7 +341,10 @@ export default function ReportScreen() {
       }
     } catch (e) {
       console.error('Error handleExportPDF:', e);
-      Alert.alert('Error', 'Gagal membuat laporan');
+      Alert.alert(
+      'Gagal ekspor di emulator',
+      'Fitur ekspor PDF tidak bisa di emulator. Coba di perangkat HP asli.',
+    );
     } finally {
       setLoadingClass(null);
     }
@@ -376,7 +378,6 @@ export default function ReportScreen() {
             common.bgWhite,
             common.roundedLg,
             common.p4,
-            common.shadow,
             common.mb4,
           ]}
         >
@@ -434,7 +435,6 @@ export default function ReportScreen() {
               common.flexRow,
               common.itemsCenter,
               common.justifyBetween,
-              common.shadow,
             ]}
             activeOpacity={0.7}
           >
@@ -452,7 +452,6 @@ export default function ReportScreen() {
                 common.bgWhite,
                 common.roundedLg,
                 common.mt1,
-                common.shadow,
               ]}
             >
               <ScrollView style={{ maxHeight: 220 }} nestedScrollEnabled>

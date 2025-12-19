@@ -29,18 +29,18 @@ const formatCurrency = (amount: number) =>
   `Rp ${amount.toLocaleString('id-ID')}`;
 
 const buildStudentDetailsHTML = (
-  grade: number,
+  className: string,
   students: Student[],
   transactions: Transaction[]
 ): string => {
-  const gradeStudents = students.filter((s) => s.grade === grade);
+  const classStudents = students.filter((s) => s.class === className);
 
-  if (gradeStudents.length === 0) {
+  if (classStudents.length === 0) {
     return '<p>Tidak ada siswa untuk kelas ini.</p>';
   }
 
   let html = `
-    <h3>Detail Siswa Kelas ${grade}</h3>
+    <h3>Detail Siswa Kelas ${className}</h3>
     <table style="width: 100%; border-collapse: collapse; margin-top: 20px;">
       <thead>
         <tr style="background-color: #f0f0f0;">
@@ -54,7 +54,7 @@ const buildStudentDetailsHTML = (
       <tbody>
   `;
 
-  gradeStudents.forEach((student, index) => {
+  classStudents.forEach((student, index) => {
     const studentTransactions = transactions.filter(
       (t) => t.studentId === student.id
     );
@@ -97,7 +97,7 @@ const buildPDFHTML = (
   schoolName = 'SD Negeri 3 Linggasari'
 ): string => {
   const studentDetailsHTML = buildStudentDetailsHTML(
-    classReport.grade,
+    classReport.className || '',
     students,
     transactions
   );

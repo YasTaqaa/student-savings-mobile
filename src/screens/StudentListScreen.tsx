@@ -290,7 +290,6 @@ export default function StudentListScreen({ navigation, route }: Props) {
                         common.flexRow,
                         common.justifyBetween,
                         common.itemsCenter,
-                        common.shadow,
                       ]}
                     >
                       <TouchableOpacity

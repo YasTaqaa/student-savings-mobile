@@ -98,7 +98,6 @@ export default function ProfileScreen() {
             common.bgWhite,
             common.roundedLg,
             common.p4,
-            common.shadow,
             common.flexRow,
             common.itemsCenter,
           ]}
@@ -137,7 +136,6 @@ export default function ProfileScreen() {
             common.roundedLg,
             common.p4,
             common.mt3,
-            common.shadow,
           ]}
         >
           <Text style={[common.subtitle, common.mb3]}>Ringkasan</Text>
