@@ -23,10 +23,22 @@ export interface Transaction {
   studentId: string;
   type: 'deposit' | 'withdrawal';
   amount: number;
+  date: string;
 }
 
 const formatCurrency = (amount: number) =>
   `Rp ${amount.toLocaleString('id-ID')}`;
+
+const formatDateTime = (iso: string): string => {
+  const d = new Date(iso);
+  return d.toLocaleString('id-ID', {
+    day: '2-digit',
+    month: '2-digit',
+    year: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit',
+  });
+};
 
 const buildStudentDetailsHTML = (
   className: string,
@@ -49,6 +61,7 @@ const buildStudentDetailsHTML = (
           <th style="border: 1px solid #ddd; padding: 8px; text-align: right;">Saldo</th>
           <th style="border: 1px solid #ddd; padding: 8px; text-align: right;">Setoran</th>
           <th style="border: 1px solid #ddd; padding: 8px; text-align: right;">Penarikan</th>
+          <th style="border: 1px solid #ddd; padding: 8px; text-align: left;">Transaksi Terakhir</th>
         </tr>
       </thead>
       <tbody>
@@ -64,6 +77,11 @@ const buildStudentDetailsHTML = (
     const totalPenarikan = studentTransactions
       .filter((t) => t.type === 'withdrawal')
       .reduce((sum, t) => sum + t.amount, 0);
+      const lastTx = studentTransactions
+      .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())[0];
+    const lastTxText = lastTx 
+      ? `${formatDateTime(lastTx.date)} - ${lastTx.type === 'deposit' ? 'Setor' : 'Tarik'}` 
+      : '-';
 
     html += `
       <tr>
@@ -78,6 +96,7 @@ const buildStudentDetailsHTML = (
         <td style="border: 1px solid #ddd; padding: 8px; text-align: right;">${formatCurrency(
           totalPenarikan
         )}</td>
+        <td style="border: 1px solid #ddd; padding: 8px; text-align: left;">${lastTxText}</td>
       </tr>
     `;
   });
@@ -124,28 +143,6 @@ const buildPDFHTML = (
             padding-bottom: 10px;
             margin-top: 20px;
           }
-          .summary-grid {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 15px;
-            margin: 20px 0;
-          }
-          .summary-card {
-            border: 1px solid #ddd;
-            padding: 15px;
-            border-radius: 5px;
-            background-color: #f9f9f9;
-          }
-          .summary-card-label {
-            font-size: 12px;
-            color: #666;
-            margin-bottom: 5px;
-          }
-          .summary-card-value {
-            font-size: 16px;
-            font-weight: bold;
-            color: #2c5282;
-          }
           table {
             width: 100%;
             border-collapse: collapse;
@@ -177,30 +174,32 @@ const buildPDFHTML = (
         <h2>Kelas ${classReport.grade}</h2>
 
         <h3>Ringkasan Kelas</h3>
-        <div class="summary-grid">
-          <div class="summary-card">
-            <div class="summary-card-label">Total Siswa</div>
-            <div class="summary-card-value">${classReport.totalStudents} siswa</div>
-          </div>
-          <div class="summary-card">
-            <div class="summary-card-label">Total Saldo</div>
-            <div class="summary-card-value">${formatCurrency(
-              classReport.totalBalance
-            )}</div>
-          </div>
-          <div class="summary-card">
-            <div class="summary-card-label">Total Setoran</div>
-            <div class="summary-card-value">${formatCurrency(
-              classReport.totalDeposits
-            )}</div>
-          </div>
-          <div class="summary-card">
-            <div class="summary-card-label">Total Penarikan</div>
-            <div class="summary-card-value">${formatCurrency(
-              classReport.totalWithdrawals
-            )}</div>
-          </div>
-        </div>
+        <table style="width: 100%; border-collapse: collapse; margin-top: 15px;">
+          <thead>
+            <tr style="background-color: #2d5016; color: white; font-weight: bold;">
+              <th style="border: 1px solid #ddd; padding: 8px; text-align: center;">Total Siswa</th>
+              <th style="border: 1px solid #ddd; padding: 8px; text-align: center;">Total Saldo</th>
+              <th style="border: 1px solid #ddd; padding: 8px; text-align: center;">Total Setoran</th>
+              <th style="border: 1px solid #ddd; padding: 8px; text-align: center;">Total Penarikan</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td style="border: 1px solid #ddd; padding: 8px; text-align: center;">
+                ${classReport.totalStudents} siswa
+              </td>
+              <td style="border: 1px solid #ddd; padding: 8px; text-align: center;">
+                ${formatCurrency(classReport.totalBalance)}
+              </td>
+              <td style="border: 1px solid #ddd; padding: 8px; text-align: center;">
+                ${formatCurrency(classReport.totalDeposits)}
+              </td>
+              <td style="border: 1px solid #ddd; padding: 8px; text-align: center;">
+                ${formatCurrency(classReport.totalWithdrawals)}
+              </td>
+            </tr>
+          </tbody>
+        </table>
 
         ${studentDetailsHTML}
 

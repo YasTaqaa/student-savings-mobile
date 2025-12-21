@@ -17,6 +17,18 @@ type ReportItemProps = {
   formatCurrency: (amount: number) => string;
 };
 
+const formatDateTime = (iso: string) => {
+  const d = new Date(iso);
+  return d.toLocaleString('id-ID', {
+    day: '2-digit',
+    month: '2-digit',
+    year: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit',
+  });
+};
+
+
 function ReportItem({
   report,
   index,
@@ -67,7 +79,6 @@ function ReportItem({
           common.mb3,
         ]}
       >
-        {/* Header kelas */}
         <View
           style={[common.flexRow, common.justifyBetween, common.mb1]}
         >
@@ -84,7 +95,6 @@ function ReportItem({
           </Text>
         </View>
 
-        {/* Ringkasan saldo kelas */}
         <View
           style={[
             common.flexRow,
@@ -122,7 +132,6 @@ function ReportItem({
           </View>
         </View>
 
-        {/* Daftar siswa singkat */}
         <Text style={[common.caption, common.mb1]}>
           Detail Siswa Kelas {report.className}
         </Text>
@@ -141,6 +150,15 @@ function ReportItem({
               .filter((t) => t.type === 'withdrawal')
               .reduce((sum, t) => sum + t.amount, 0);
 
+            const lastTx = studentTransactions.sort(
+              (a, b) =>
+                new Date(b.date).getTime() - new Date(a.date).getTime(),
+              )[0];
+
+            const lastTxText = lastTx
+                ? `${formatDateTime(lastTx.date)} (${lastTx.type === 'deposit' ? 'Setor' : 'Tarik'})`
+            : '-';
+
             return (
               <View
                 key={student.id}
@@ -157,12 +175,14 @@ function ReportItem({
                     Setoran: {formatCurrency(totalSetoran)} • Penarikan:{' '}
                     {formatCurrency(totalPenarikan)}
                   </Text>
+                  <Text style={common.caption}>
+                    Terakhir transaksi: {lastTxText}
+                  </Text>
                 </View>
               </View>
             );
           })}
 
-        {/* Tombol Export PDF per kelas */}
         {report.className && (
           <TouchableOpacity
             onPress={() => onExport(report.className!)}
@@ -192,7 +212,6 @@ function ReportItem({
   );
 }
 
-// ===== Komponen utama =====
 export default function ReportScreen() {
   const [loadingClass, setLoadingClass] = useState<string | null>(null);
   const [selectedClass, setSelectedClass] = useState<string | null>(null);
@@ -203,7 +222,6 @@ export default function ReportScreen() {
     (state) => state.transactions,
   ) as Transaction[];
 
-  // ====== Hitung laporan per kelas ======
   const classReports: ClassReport[] = useMemo(() => {
     const classMap = new Map<string, Student[]>();
 

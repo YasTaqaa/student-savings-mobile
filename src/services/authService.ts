@@ -38,7 +38,7 @@ export const login = async (credentials: LoginCredentials): Promise<LoginRespons
       id: userCred.user.uid,
       username: email,
       name: email.split('@')[0],
-      role, // simpan role di store
+      role, 
     };
 
     return { success: true, user: appUser, token, message: 'Login berhasil' };

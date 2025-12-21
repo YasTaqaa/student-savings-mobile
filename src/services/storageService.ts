@@ -7,7 +7,6 @@ const STORAGE_KEYS = {
   TRANSACTIONS: '@student_savings:transactions',
 };
 
-// User Storage
 export const saveUser = async (user: User): Promise<void> => {
   try {
     await AsyncStorage.setItem(STORAGE_KEYS.USER, JSON.stringify(user));
@@ -36,7 +35,6 @@ export const clearUser = async (): Promise<void> => {
   }
 };
 
-// Students Storage
 export const saveStudents = async (students: Student[]): Promise<void> => {
   try {
     await AsyncStorage.setItem(STORAGE_KEYS.STUDENTS, JSON.stringify(students));
@@ -56,7 +54,6 @@ export const getStudents = async (): Promise<Student[]> => {
   }
 };
 
-// Transactions Storage
 export const saveTransactions = async (transactions: Transaction[]): Promise<void> => {
   try {
     await AsyncStorage.setItem(STORAGE_KEYS.TRANSACTIONS, JSON.stringify(transactions));
