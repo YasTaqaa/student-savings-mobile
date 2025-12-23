@@ -10,23 +10,18 @@ type Props = NativeStackScreenProps<StudentStackParamList, 'EditStudent'>;
 
 export default function EditStudentScreen({ route, navigation }: Props) {
   const { studentId } = route.params;
-
   const getStudentById = useStore((state) => state.getStudentById);
   const updateStudent = useStore((state) => state.updateStudent);
   const addTransaction = useStore((state) => state.addTransaction);
   const currentUser = useStore((state) => state.user);
-
   const isAdmin = currentUser?.role === 'admin';
   const isTeacher = currentUser?.role === 'teacher';
-
   const student = getStudentById(studentId);
-
   const [nis, setNis] = useState(student?.nis || '');
   const [name, setName] = useState(student?.name || '');
   const [grade, setGrade] = useState<number>(Number(student?.grade) || 1);
   const [studentClass, setStudentClass] = useState(student?.class || '');
   const currentBalance = student?.balance || 0;
-
   const [depositAmount, setDepositAmount] = useState('');
   const [withdrawAmount, setWithdrawAmount] = useState('');
   const [saving, setSaving] = useState(false);

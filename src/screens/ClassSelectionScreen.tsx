@@ -94,7 +94,6 @@ const handleSelectClass = (grade: string, className?: string) => {
       style={container.screen}
       contentContainerStyle={{ padding: 16, paddingBottom: 32 }}
     >
-      {/* Header total siswa */}
       <Animated.View
         style={{
           opacity: headerOpacity,

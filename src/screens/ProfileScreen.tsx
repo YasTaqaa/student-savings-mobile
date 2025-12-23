@@ -9,7 +9,6 @@ export default function ProfileScreen() {
   const logout = useStore((state) => state.logout);
   const students = useStore((state) => state.students);
   const transactions = useStore((state) => state.transactions);
-
   const fadeAnim = useRef(new Animated.Value(0)).current;
   const translateY = useRef(new Animated.Value(20)).current;
 

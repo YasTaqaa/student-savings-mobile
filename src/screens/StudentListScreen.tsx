@@ -20,13 +20,11 @@ interface Props {
 
 export default function StudentListScreen({ navigation, route }: Props) {
   const { grade, className: selectedClassName } = route.params;
-
   const allStudents = useStore((state) => state.students);
   const addStudent = useStore((state) => state.addStudent);
   const deleteStudent = useStore((state) => state.deleteStudent);
   const currentUser = useStore((state) => state.user);
   const isAdmin = currentUser?.role === 'admin';
-
   const [modalVisible, setModalVisible] = useState(false);
   const [newStudent, setNewStudent] = useState({
     nis: '',
